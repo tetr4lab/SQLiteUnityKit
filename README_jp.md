@@ -9,7 +9,7 @@ ___
   * できるだけ例外は内部で捉えて、リソースの未解放を避けて動き続けるように務めました。
 
 ## 必要な環境
-  * テストは、Unity2017.4と2018.2で行いました。
+  * テストは、Unity2017.4と2018.2のWindowsとAndroidのみで行いました。
   * C# 6 の文字列補完(string interpolation)を使用しています。
     * PlayerSettingsでScripting Runtime Versionを4.xに設定してください。
 
