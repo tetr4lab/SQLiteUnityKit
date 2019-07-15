@@ -46,7 +46,7 @@ namespace SQLiteTest {
 				}
 				// 状況の取得と表示
 				foreach (SQLiteRow row in Party.GetTable ()) {
-					Console.text += $"{new Party (row.GetColumn (Guid.Parse, "PUID")).ToString ()}\n=====\n";
+					Console.text += $"{new Party (row.GetColumn (Guid.Parse, "PUID"))}\n=====\n";
 				}
 				this.DumpTable ("パーティ", Party.GetTable ());
 				this.DumpTable ("メンバー", Member.GetTable ());
@@ -68,7 +68,7 @@ namespace SQLiteTest {
 					Console.text += $"#{row + 1}/{table.Rows.Count}\n";
 					foreach (ColumnDefinition column in table.Columns) {
 						if (table [row, column.Name] != null) {
-							Console.text += $"{column.Name} {ColumnDefinition.ColumnTypeName [column.Type]}: {table [row, column.Name].ToString ()}\n";
+							Console.text += $"{column.Name} {ColumnDefinition.ColumnTypeName [column.Type]}: {table [row, column.Name]}\n";
 						}
 					}
 				}
@@ -83,7 +83,7 @@ namespace SQLiteTest {
 			} else {
 				foreach (string name in row.Keys) {
 					if (row [name] != null) {
-						Console.text += $"{name}: {row [name].ToString ()}\n";
+						Console.text += $"{name}: {row [name]}\n";
 					}
 				}
 			}

@@ -58,12 +58,12 @@ namespace SQLiteUnity {
 		private string pathDB; // DBファイルパス
 
 		/// <summary>新規生成 (初期化クエリ) (既にあれば単に使う、元があればコピーして使う)</summary>
-		public SQLite (string dbName, string query = null) {
+		public SQLite (string dbName, string query = null, string path = null) {
 			this.ptrSQLiteDB = IntPtr.Zero;
-			this.pathDB = System.IO.Path.Combine (Application.persistentDataPath, dbName);
+			this.pathDB = System.IO.Path.Combine (path ?? Application.persistentDataPath, dbName);
 			if (System.IO.File.Exists (this.pathDB)) { // 既存
 				return;
-			} else {
+			} else { // 複製
 				string sourcePath = System.IO.Path.Combine (Application.streamingAssetsPath, dbName);
 				if (sourcePath.Contains ("://")) { // Android
 					UnityWebRequest www = UnityWebRequest.Get (sourcePath);
@@ -78,8 +78,10 @@ namespace SQLiteUnity {
 					return;
 				}
 			}
-			// だめなら新規
-			this.TransactionQueries (query);
+			if (string.IsNullOrEmpty (query)) {
+				throw new ArgumentNullException ("no query");
+			}
+			this.TransactionQueries (query); // 新規
 		}
 
 		/// <summary>破棄</summary>

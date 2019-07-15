@@ -41,13 +41,8 @@ namespace SQLiteUnity {
 			return defaultValue;
 		}
 
-		/// <summary>TableCell → Parse → 値 (なければデフォルト値)</summary>
-		public static T GetColumn<T> (this SQLiteRow row, Parser<T> parser, string name) {
-			return row.GetColumn (parser, name, default (T));
-		}
-
 		/// <summary>TableCell → Parse → 値 (なければ指定値)</summary>
-		public static T GetColumn<T> (this SQLiteRow row, Parser<T> parser, string name, T defaultValue) {
+		public static T GetColumn<T> (this SQLiteRow row, Parser<T> parser, string name, T defaultValue = default) {
 			if (!string.IsNullOrEmpty (name) && row != null && row [name] != null && parser != null) {
 				var val = row [name] as string;
 				if (!string.IsNullOrEmpty (val)) {
