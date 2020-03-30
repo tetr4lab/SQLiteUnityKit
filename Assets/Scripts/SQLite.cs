@@ -22,7 +22,6 @@ namespace SQLiteUnity {
 	public class SQLite : IDisposable {
 
 		#region Plugin Access
-#if UNITY_EDITOR || UNITY_ANDROID || UNITY_STANDALONE
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_open")] private static extern SQLiteResultCode sqlite3_open (string filename, out IntPtr db);
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_close")] private static extern SQLiteResultCode sqlite3_close (IntPtr db);
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_prepare_v2")] private static extern SQLiteResultCode sqlite3_prepare_v2 (IntPtr db, string zSql, int nByte, out IntPtr ppStmpt, IntPtr pzTail);
@@ -47,7 +46,6 @@ namespace SQLiteUnity {
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_errmsg")] private static extern IntPtr sqlite3_errmsg (IntPtr db);
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_errcode")] private static extern SQLiteResultCode sqlite3_errcode (IntPtr db);
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_extended_errcode")] private static extern SQLiteResultCode sqlite3_extended_errcode (IntPtr db);
-#endif
 		#endregion
 
 		public bool IsOpen { // コネクションがある
