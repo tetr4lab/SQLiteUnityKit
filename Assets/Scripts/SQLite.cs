@@ -66,8 +66,8 @@ namespace SQLiteUnity {
 				if (sourcePath.Contains ("://")) { // Android
 					UnityWebRequest www = UnityWebRequest.Get (sourcePath);
 					www.SendWebRequest ();
-					while (!www.isDone && !www.isNetworkError && !www.isHttpError) { }
-					if (!www.isNetworkError && !www.isHttpError) {
+					while (www.result == UnityWebRequest.Result.InProgress) { }
+					if (www.result == UnityWebRequest.Result.Success) {
 						System.IO.File.WriteAllBytes (this.pathDB, www.downloadHandler.data);
 						return;
 					}
