@@ -12,7 +12,7 @@
 
 # 前提
 ### 環境
-- Unity 2021.3.2f1 (LTS)
+- Unity 2021.3.8f1 (LTS)
 - SQlite 3.33.0
 - C# 6
     - 文字列補完(string interpolation)を使用しています。
