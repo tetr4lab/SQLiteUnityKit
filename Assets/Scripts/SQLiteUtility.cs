@@ -76,9 +76,7 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>スカラー型か判定</summary>
-		public static bool IsScalar<T> (this T val) {
-			return (val is int || val is uint || val is short || val is ushort || val is long || val is ulong || val is byte || val is sbyte || val is float || val is double);
-		}
+		public static bool IsScalar<T> (this T val) => (val is int || val is uint || val is short || val is ushort || val is long || val is ulong || val is byte || val is sbyte || val is float || val is double);
 
 	}
 

@@ -48,18 +48,21 @@ namespace SQLiteUnity {
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_extended_errcode")] private static extern SQLiteResultCode sqlite3_extended_errcode (IntPtr db);
 		#endregion
 
-		public bool IsOpen { // コネクションがある
-			get { return (this.ptrSQLiteDB != IntPtr.Zero); }
-			private set { if (!value) { this.ptrSQLiteDB = IntPtr.Zero; } }
+		/// <summary>コネクションがある</summary>
+		public bool IsOpen {
+			get => _ptrSQLiteDB != IntPtr.Zero;
+			private set { if (!value) { _ptrSQLiteDB = IntPtr.Zero; } }
 		}
-		private IntPtr ptrSQLiteDB; // DBハンドル
-		private string pathDB; // DBファイルパス
+		/// <summary>DBハンドル</summary>
+		private IntPtr _ptrSQLiteDB;
+		/// <summary>DBファイルパス</summary>
+		private string _pathDB;
 
 		/// <summary>新規生成 (初期化クエリ) (既にあれば単に使う、元があればコピーして使う)</summary>
 		public SQLite (string dbName, string query = null, string path = null) {
-			this.ptrSQLiteDB = IntPtr.Zero;
-			this.pathDB = System.IO.Path.Combine (path ?? Application.persistentDataPath, dbName);
-			if (System.IO.File.Exists (this.pathDB)) { // 既存
+			_ptrSQLiteDB = IntPtr.Zero;
+			_pathDB = System.IO.Path.Combine (path ?? Application.persistentDataPath, dbName);
+			if (System.IO.File.Exists (_pathDB)) { // 既存
 				return;
 			} else { // 複製
 				string sourcePath = System.IO.Path.Combine (Application.streamingAssetsPath, dbName);
@@ -68,47 +71,47 @@ namespace SQLiteUnity {
 					www.SendWebRequest ();
 					while (www.result == UnityWebRequest.Result.InProgress) { }
 					if (www.result == UnityWebRequest.Result.Success) {
-						System.IO.File.WriteAllBytes (this.pathDB, www.downloadHandler.data);
+						System.IO.File.WriteAllBytes (_pathDB, www.downloadHandler.data);
 						return;
 					}
 				} else if (System.IO.File.Exists (sourcePath)) { // Mac, Windows, Iphone
-					System.IO.File.Copy (sourcePath, this.pathDB, true);
+					System.IO.File.Copy (sourcePath, _pathDB, true);
 					return;
 				}
 			}
 			if (string.IsNullOrEmpty (query)) {
 				throw new ArgumentNullException ("no query");
 			}
-			this.TransactionQueries (query); // 新規
+			TransactionQueries (query); // 新規
 		}
 
 		/// <summary>破棄</summary>
 		public void Dispose () {
-			if (this.IsOpen) { this.Close (); }
+			if (IsOpen) { Close (); }
 		}
 
 		/// <summary>DBを開く</summary>
 		private void Open () {
-			if (!this.IsOpen) {
-				var result = sqlite3_open (this.pathDB, out this.ptrSQLiteDB);
+			if (!IsOpen) {
+				var result = sqlite3_open (_pathDB, out _ptrSQLiteDB);
 				if (result != SQLiteResultCode.SQLITE_OK) {
-					this.IsOpen = false;
-					throw new SQLiteException ($"Could not open database file: {this.pathDB} {result}");
+					IsOpen = false;
+					throw new SQLiteException ($"Could not open database file: {_pathDB} {result}");
 				}
 			}
 		}
 
 		/// <summary>DBを閉じる</summary>
 		private void Close () {
-			if (this.IsOpen) {
-				sqlite3_close (this.ptrSQLiteDB);
-				this.IsOpen = false;
+			if (IsOpen) {
+				sqlite3_close (_ptrSQLiteDB);
+				IsOpen = false;
 			}
 		}
 
 		/// <summary>結果の不要なステートメントを実行する</summary>
 		private void ExecuteNonQuery (Statement statement) {
-			if (!this.IsOpen) { return; }
+			if (!IsOpen) { return; }
 			var result = sqlite3_step (statement.Pointer);
 			if (result != SQLiteResultCode.SQLITE_DONE) {
 				throw new SQLiteException ($"Could not execute SQL statement. {result}");
@@ -117,7 +120,7 @@ namespace SQLiteUnity {
 
 		/// <summary>ステートメントを実行して結果行列を取得</summary>
 		private SQLiteTable ExecuteQuery (Statement statement) {
-			if (!this.IsOpen) { return null; }
+			if (!IsOpen) { return null; }
 			var pointer = statement.Pointer;
 			var dataTable = new SQLiteTable ();
 			// 列の生成
@@ -166,11 +169,11 @@ namespace SQLiteUnity {
 
 		/// <summary>トランザクション実行</summary>
 		private void ExecuteTransaction (string query) {
-			if (!this.IsOpen) { return; }
+			if (!IsOpen) { return; }
 			IntPtr errorMessage;
-			var result = sqlite3_exec (ptrSQLiteDB, query, IntPtr.Zero, IntPtr.Zero, out errorMessage);
+			var result = sqlite3_exec (_ptrSQLiteDB, query, IntPtr.Zero, IntPtr.Zero, out errorMessage);
 			if (result != SQLiteResultCode.SQLITE_OK || errorMessage != IntPtr.Zero) {
-				var str = $"Could not execute SQL statement. {result} '{errorMessage}' {sqlite3_extended_errcode (this.ptrSQLiteDB)}";
+				var str = $"Could not execute SQL statement. {result} '{errorMessage}' {sqlite3_extended_errcode (_ptrSQLiteDB)}";
 				sqlite3_free (errorMessage);
 				throw new SQLiteException (str);
 			}
@@ -185,12 +188,12 @@ namespace SQLiteUnity {
 
 		/// <summary>単文を実行</summary>
 		public void ExecuteNonQuery (string query, SQLiteRow param = null) {
-			var close = !this.IsOpen; // 元の状態
-			this.Open ();
+			var close = !IsOpen; // 元の状態
+			Open ();
 			try {
 				using (Statement statement = new Statement (this, query, param)) {
 					if (statement.Pointer != IntPtr.Zero) {
-						this.ExecuteNonQuery (statement);
+						ExecuteNonQuery (statement);
 					}
 				}
 			}
@@ -198,19 +201,19 @@ namespace SQLiteUnity {
 				Debug.LogError ($"SQLite: Can't ExecuteNonQuery {e}");
 			}
 			finally {
-				if (close) { this.Close (); } // 元に戻す
+				if (close) { Close (); } // 元に戻す
 			}
 		}
 
 		/// <summary>単文を実行して結果を返す</summary>
 		public SQLiteTable ExecuteQuery (string query, SQLiteRow param = null) {
 			SQLiteTable result = null;
-			var close = !this.IsOpen; // 元の状態
-			this.Open ();
+			var close = !IsOpen; // 元の状態
+			Open ();
 			try {
 				using (Statement statement = new Statement (this, query, param)) {
 					if (statement.Pointer != IntPtr.Zero) {
-						result = this.ExecuteQuery (statement);
+						result = ExecuteQuery (statement);
 					}
 				}
 			}
@@ -218,31 +221,29 @@ namespace SQLiteUnity {
 				Debug.LogError ($"SQLite: Can't ExecuteQuery {e}");
 			}
 			finally {
-				if (close) { this.Close (); } // 元に戻す
+				if (close) { Close (); } // 元に戻す
 			}
 			return result;
 		}
 
 		/// <summary>複文を一括実行し、誤りがあれば巻き戻す</summary>
-		public bool TransactionQueries<T> (T query) where T : IEnumerable<string> {
-			return TransactionQueries (string.Join ("\n", query));
-		}
+		public bool TransactionQueries<T> (T query) where T : IEnumerable<string> => TransactionQueries (string.Join ("\n", query));
 
 		/// <summary>複文を一括実行し、誤りがあれば巻き戻す</summary>
 		public bool TransactionQueries (string query) {
-			var close = !this.IsOpen; // 元の状態
+			var close = !IsOpen; // 元の状態
 			try {
-				this.Open ();
-				this.ExecuteTransaction ($"BEGIN TRANSACTION;\n{query};\nCOMMIT;");
+				Open ();
+				ExecuteTransaction ($"BEGIN TRANSACTION;\n{query};\nCOMMIT;");
 				return true;
 			}
 			catch (SQLiteException e) {
-				this.ExecuteTransaction ("ROLLBACK;");
+				ExecuteTransaction ("ROLLBACK;");
 				Debug.LogError ($"SQLite: Can't Transaction, rollbacked {e}");
 				return false;
 			}
 			finally {
-				if (close) { this.Close (); } // 元に戻す
+				if (close) { Close (); } // 元に戻す
 			}
 		}
 
@@ -250,32 +251,33 @@ namespace SQLiteUnity {
 
 		/// <summary>SQLステートメント</summary>
 		private class Statement : IDisposable {
-			private SQLite database;
-			public IntPtr Pointer { get { return this.pointer; } }
+			private SQLite _database;
+			public IntPtr Pointer { get { return pointer; } }
 			private IntPtr pointer;
 
 			/// <summary>SQLステートメントの生成</summary>
 			public Statement (SQLite database, string query, SQLiteRow param = null) {
-				this.database = database;
-				this.pointer = IntPtr.Zero;
-				if (this.database != null && !database.IsOpen) {
+                Statement statement = this;
+                statement._database = database;
+				pointer = IntPtr.Zero;
+				if (_database != null && !database.IsOpen) {
 					throw new SQLiteException ("SQLite database is not open.");
 				}
-				if (sqlite3_prepare_v2 (this.database.ptrSQLiteDB, query, System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount (query), out this.pointer, IntPtr.Zero) != SQLiteResultCode.SQLITE_OK) {
-					IntPtr errorMsg = sqlite3_errmsg (this.database.ptrSQLiteDB);
+				if (sqlite3_prepare_v2 (_database._ptrSQLiteDB, query, System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount (query), out pointer, IntPtr.Zero) != SQLiteResultCode.SQLITE_OK) {
+					IntPtr errorMsg = sqlite3_errmsg (_database._ptrSQLiteDB);
 					throw new SQLiteException (Marshal.PtrToStringAnsi (errorMsg));
 				}
 				if (param != null) {
-					this.BindParameter (param);
+					BindParameter (param);
 				}
 			}
 
 			/// <summary>破棄</summary>
 			public void Dispose () {
-				if (this.database != null && this.pointer != IntPtr.Zero) {
-					var result = sqlite3_finalize (this.pointer);
+				if (_database != null && pointer != IntPtr.Zero) {
+					var result = sqlite3_finalize (pointer);
 					if (result != SQLiteResultCode.SQLITE_OK) {
-						throw new SQLiteException ($"Could not finalize SQL statement. {result} {sqlite3_extended_errcode (this.database.ptrSQLiteDB)}");
+						throw new SQLiteException ($"Could not finalize SQL statement. {result} {sqlite3_extended_errcode (_database._ptrSQLiteDB)}");
 					}
 				}
 			}
@@ -287,23 +289,23 @@ namespace SQLiteUnity {
 						object val = param [key];
 						string name = (key [0] == ':' || key [0] == '@' || key [0] == '$') ? key : $":{key}";
 						if (val == null) {
-							sqlite3_bind_null (this.pointer, sqlite3_bind_parameter_index (this.pointer, name));
+							sqlite3_bind_null (pointer, sqlite3_bind_parameter_index (pointer, name));
 						} else if (val is string) {
-							sqlite3_bind_text (this.pointer, sqlite3_bind_parameter_index (this.pointer, name), System.Text.Encoding.UTF8.GetBytes ((string) val), System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount ((string) val), new IntPtr (-1));
+							sqlite3_bind_text (pointer, sqlite3_bind_parameter_index (pointer, name), System.Text.Encoding.UTF8.GetBytes ((string) val), System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount ((string) val), new IntPtr (-1));
 						} else if (val is byte []) {
-							sqlite3_bind_text (this.pointer, sqlite3_bind_parameter_index (this.pointer, name), (byte []) val, ((byte []) val).Length, new IntPtr (-1));
+							sqlite3_bind_text (pointer, sqlite3_bind_parameter_index (pointer, name), (byte []) val, ((byte []) val).Length, new IntPtr (-1));
 						} else if (val is float) {
-							sqlite3_bind_double (this.pointer, sqlite3_bind_parameter_index (this.pointer, name), (double) (float) val);
+							sqlite3_bind_double (pointer, sqlite3_bind_parameter_index (pointer, name), (double) (float) val);
 						} else if (val is double) {
-							sqlite3_bind_double (this.pointer, sqlite3_bind_parameter_index (this.pointer, name), (double) val);
+							sqlite3_bind_double (pointer, sqlite3_bind_parameter_index (pointer, name), (double) val);
 						} else if (val.IsInt32 ()) {
-							sqlite3_bind_int (this.pointer, sqlite3_bind_parameter_index (this.pointer, name), (int) val);
+							sqlite3_bind_int (pointer, sqlite3_bind_parameter_index (pointer, name), (int) val);
 						} else { // その他の型
 							if (val.Equals (val.GetType ().GetDefaultValue ())) { // デフォルト値ならNULL
-								sqlite3_bind_null (this.pointer, sqlite3_bind_parameter_index (this.pointer, name));
+								sqlite3_bind_null (pointer, sqlite3_bind_parameter_index (pointer, name));
 							} else { // 既定の文字列化
 								val = (val is DateTime) ? ((DateTime)val).ToString ("yyyy-MM-dd HH:mm:ss")  : val.ToString (); // 日時の文字列化書式を制御
-								sqlite3_bind_text (this.pointer, sqlite3_bind_parameter_index (this.pointer, name), System.Text.Encoding.UTF8.GetBytes ((string) val), System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount ((string) val), new IntPtr (-1));
+								sqlite3_bind_text (pointer, sqlite3_bind_parameter_index (pointer, name), System.Text.Encoding.UTF8.GetBytes ((string) val), System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount ((string) val), new IntPtr (-1));
 							}
 						}
 					}
@@ -427,19 +429,21 @@ namespace SQLiteUnity {
 
 	/// <summary>列の定義</summary>
 	public class ColumnDefinition {
+
+		/// <summary>列名</summary>
 		public string Name;
+
+		/// <summary>型</summary>
 		public SQLiteColumnType Type;
 
 		/// <summary>要素を指定して生成</summary>
 		public ColumnDefinition (string name, SQLiteColumnType type) {
-			this.Name = name;
-			this.Type = type;
+			Name = name;
+			Type = type;
 		}
 
 		/// <summary>文字列化</summary>
-		public override string ToString () {
-			return $"{this.Name} {ColumnTypeName [this.Type]}";
-		}
+		public override string ToString () => $"{Name} {ColumnTypeName [Type]}";
 
 		/// <summary>SQLite列型をSQL型名に変換</summary>
 		public static readonly Dictionary<SQLiteColumnType, string> ColumnTypeName = new Dictionary<SQLiteColumnType, string> {
@@ -457,63 +461,53 @@ namespace SQLiteUnity {
 
 		#region Static
 		/// <summary>行がnullまたは空</summary>
-		public static bool IsNullOrEmpty (SQLiteRow row) {
-			return (row == null || row.Count <= 0);
-		}
+		public static bool IsNullOrEmpty (SQLiteRow row) => (row == null || row.Count <= 0);
 		#endregion
 
 		/// <summary>列にアクセスするインデクサ (列名)</summary>
 		public new object this [string columnName] {
-			get {
-				if (this.ContainsKey (columnName)) {
-					return base [columnName];
-				}
-				return null;
-			}
-			set {
-				if (this.ContainsKey (columnName)) {
-					base [columnName] = value;
-				}
-			}
+			get => ContainsKey (columnName) ? base [columnName] : null;
+			set { if (ContainsKey (columnName)) { base [columnName] = value; } }
 		}
 
 		/// <summary>要素の連結</summary>
 		public SQLiteRow AddRange (SQLiteRow addition) {
-			foreach (var item in addition) { if (!this.ContainsKey (item.Key)) { this.Add (item.Key, item.Value); } }
+			foreach (var item in addition) { if (!ContainsKey (item.Key)) { Add (item.Key, item.Value); } }
 			return this;
 		}
 
 		/// <summary>文字列化</summary>
 		public override string ToString () {
 			var keyval = new List<string> { };
-			foreach (var key in this.Keys) {
-				keyval.Add ($"{{ {key}, {toString (this [key])} }}");
+			foreach (var key in Keys) {
+				keyval.Add ($"{{ {key}, {_toString (this [key])} }}");
 			}
 			return $"{{ {(string.Join (", ", keyval))} }}";
-		}
-		private static string toString (object val) {
-			if (val == null) {
-				return "null";
-			} else if (val is string || val is byte []) {
-				return $"\"{val}\"";
-			} else {
-				return val.ToString ();
+
+			string _toString (object val) {
+				if (val == null) {
+					return "null";
+				} else if (val is string || val is byte []) {
+					return $"\"{val}\"";
+				} else {
+					return val.ToString ();
+				}
 			}
 		}
-
 	}
 
 	/// <summary>テーブルのデータ</summary>
 	public class SQLiteTable {
 
+		/// <summary>列定義</summary>
 		public List<ColumnDefinition> Columns { get; protected set; }
+
+		/// <summary>行</summary>
 		public List<SQLiteRow> Rows { get; protected set; }
 
 		#region Static
 		/// <summary>テーブルがnullまたは空</summary>
-		public static bool IsNullOrEmpty (SQLiteTable table) {
-			return (table == null || table.Rows.Count <= 0);
-		}
+		public static bool IsNullOrEmpty (SQLiteTable table) => (table == null || table.Rows.Count <= 0);
 		#endregion
 
 		/// <summary>空の生成</summary>
@@ -525,45 +519,40 @@ namespace SQLiteUnity {
 		/// <summary>列一覧からの生成</summary>
 		public SQLiteTable (params ColumnDefinition [] columns) : this () {
 			for (var i = 0; i < columns.Length; i++) {
-				this.Columns.Add (columns [i]);
+				Columns.Add (columns [i]);
 			}
 		}
 
 		/// <summary>先頭行</summary>
-		public SQLiteRow Top { get { return (this.Rows.Count > 0) ? this.Rows [0] : null; } }
+		public SQLiteRow Top => (Rows.Count > 0) ? Rows [0] : null;
 
 		// 行にアクセスするインデクサ
-		public SQLiteRow this [int index] { get { return (index >= 0 && index < this.Rows.Count) ? this.Rows [index] : null; } }
+		public SQLiteRow this [int index] => (index >= 0 && index < Rows.Count) ? Rows [index] : null;
 
 		// セルにアクセスするインデクサ (行番号と列番号)
 		public object this [int rowIndex, int columnIndex] {
-			get {
-				if (columnIndex >= 0 && columnIndex < this.Columns.Count) {
-					return this.Rows [rowIndex] [this.Columns [columnIndex].Name];
-				}
-				return null;
-			}
+			get => (rowIndex >= 0 && rowIndex < Rows.Count && columnIndex >= 0 && columnIndex < Columns.Count) ? Rows [rowIndex] [Columns [columnIndex].Name] : null;
 			set {
-				if (columnIndex >= 0 && columnIndex < this.Columns.Count) {
-					this.Rows [rowIndex] [this.Columns [columnIndex].Name] = value;
+				if (rowIndex >= 0 && rowIndex < Rows.Count && columnIndex >= 0 && columnIndex < Columns.Count) {
+					Rows [rowIndex] [Columns [columnIndex].Name] = value;
 				}
 			}
 		}
 
 		// セルにアクセスするインデクサ (行番号と列名)
-		public object this [int index, string columnName] {
-			get {
-				return this.Rows [index] [columnName];
-			}
+		public object this [int rowIndex, string columnName] {
+			get => (rowIndex >= 0 && rowIndex < Rows.Count ) ? Rows [rowIndex] [columnName] : null;
 			set {
-				this.Rows [index] [columnName] = value;
+				if (rowIndex >= 0 && rowIndex < Rows.Count) {
+					Rows [rowIndex] [columnName] = value;
+				}
 			}
 		}
 
 		/// <summary>コレクション</summary>
 		public IEnumerator GetEnumerator () {
-			for (var i = 0; i < this.Rows.Count; i++) {
-				yield return this.Rows [i];
+			for (var i = 0; i < Rows.Count; i++) {
+				yield return Rows [i];
 			}
 		}
 
@@ -576,34 +565,32 @@ namespace SQLiteUnity {
 			for (int i = 0; i < values.Length; i++) {
 				row.Add (Columns [i].Name, values [i]);
 			}
-			this.Rows.Add (row);
+			Rows.Add (row);
 		}
 
 		/// <summary>名前と型を指定して列を加える</summary>
 		public void AddColumn (string name, SQLiteColumnType type, object [] values = null) {
-			this.AddColumn (new ColumnDefinition (name, type), values);
+			AddColumn (new ColumnDefinition (name, type), values);
 		}
 
 		/// <summary>列の定義を指定して列を加える</summary>
 		public void AddColumn (ColumnDefinition column, object [] values = null) {
-			if (this.Columns.Exists (col => col.Name == column.Name)) {
+			if (Columns.Exists (col => col.Name == column.Name)) {
 				throw new ArgumentException ($"The column name is already exist. '{column.Name}'");
 			}
-			this.Columns.Add (column);
+			Columns.Add (column);
 			if (values != null) {
-				if (values.Length != this.Rows.Count) {
+				if (values.Length != Rows.Count) {
 					throw new IndexOutOfRangeException ("The number of values in the table must match the number of row");
 				}
-				for (var i = 0; i < this.Rows.Count; i++) {
-					this.Rows [i].Add (column.Name, values [i]);
+				for (var i = 0; i < Rows.Count; i++) {
+					Rows [i].Add (column.Name, values [i]);
 				}
 			}
 		}
 
 		/// <summary>文字列化</summary>
-		public override string ToString () {
-			return $"({string.Join (", ", this.Columns.ConvertAll (column => column.ToString ()))})\n{string.Join ("\n", this.Rows.ConvertAll (row => row.ToString ()))}";
-		}
+		public override string ToString () => $"({string.Join (", ", Columns.ConvertAll (column => column.ToString ()))})\n{string.Join ("\n", Rows.ConvertAll (row => row.ToString ()))}";
 
 	}
 
@@ -611,14 +598,10 @@ namespace SQLiteUnity {
 	public static partial class SQLiteUtility {
 
 		/// <summary>型のデフォルト値を得る</summary>
-		public static object GetDefaultValue (this Type type) {
-			return type.IsValueType ? Activator.CreateInstance (type) : null;
-		}
+		public static object GetDefaultValue (this Type type) => type.IsValueType ? Activator.CreateInstance (type) : null;
 
 		/// <summary>32bitまでの整数型か判定</summary>
-		public static bool IsInt32<T> (this T val) {
-			return (val is int || val is uint || val is short || val is ushort  || val is byte || val is sbyte);
-		}
+		public static bool IsInt32<T> (this T val) => (val is int || val is uint || val is short || val is ushort  || val is byte || val is sbyte);
 
 	}
 

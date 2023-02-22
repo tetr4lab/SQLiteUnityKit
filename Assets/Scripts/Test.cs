@@ -9,25 +9,25 @@ namespace SQLiteTest {
 
 	public class Test : MonoBehaviour {
 
-		// DB
+		/// <summary>DB</summary>
 		public static SQLite Database;
 
-		// 出力先
+		/// <summary>出力先</summary>
 		public static Text Console;
 
-		// 準備
+		/// <summary>準備</summary>
 		private void Awake () {
 			Console = GetComponentInChildren<Text> ();
 		}
 
-		// テスト
+		/// <summary>テスト</summary>
 		private void Start () {
 			// 開始宣言
 			Console.text = "SQLiteUnity Test Start\n\n";
 			Debug.Log ("Start");
 
 			// DB接続とテスト (初回は生成)
-			using (Database = new SQLite ("SQLiteTest.db", Creation)) {
+			using (Database = new SQLite ("SQLiteTest.db", _creationSql)) {
 
 				// 初回のみ
 				if (SQLiteTable.IsNullOrEmpty (Party.GetTable ())) {
@@ -58,7 +58,7 @@ namespace SQLiteTest {
 			Debug.Log (Application.persistentDataPath);
 		}
 
-		// テーブルの出力
+		/// <summary>テーブルの出力</summary>
 		void DumpTable (string subject, SQLiteTable table) {
 			if (!string.IsNullOrEmpty (subject)) { Console.text += $"--- Dump {subject} ---\n"; }
 			if (SQLiteTable.IsNullOrEmpty (table)) {
@@ -91,8 +91,7 @@ namespace SQLiteTest {
 			Debug.Log (row);
 		}
 
-		#region Creation
-		private const string Creation = @"
+		private const string _creationSql = @"
 CREATE TABLE [Character] ( -- キャラ
 		[CUID] TEXT NOT NULL PRIMARY KEY CHECK ([CUID] GLOB '[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]-[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]'), -- キャラID
 		[Name] TEXT, -- 名前
@@ -180,12 +179,11 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		UPDATE [Party] SET [Modified] = CURRENT_TIMESTAMP WHERE ROWID == NEW.ROWID;
 		END;
 ";
-		#endregion
 
 	}
 
 
-	// キャラ
+	/// <summary>キャラ</summary>
 	public class Character {
 		public Guid CUID; // ID
 		public string Name; // 名前
@@ -195,19 +193,19 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 			this.Name = name;
 		}
 
-		// 全データ取得
+		/// <summary>全データ取得</summary>
 		public static SQLiteTable GetTable () {
 			return Test.Database.ExecuteQuery ("SELECT * FROM [RichCharacter];");
 		}
 
-		// IDを指定して既存のキャラを生成
+		/// <summary>IDを指定して既存のキャラを生成</summary>
 		public Character (Guid cuid) {
 			var table = Test.Database.ExecuteQuery ("SELECT * FROM [Character] WHERE [CUID]=:CUID;", new SQLiteRow { { "CUID", cuid }, });
 			this.CUID = cuid;
 			this.Name = table.Top.GetColumn ("Name");
 		}
 
-		// 名前を与えて新しいキャラを作る
+		/// <summary>名前を与えて新しいキャラを作る</summary>
 		public static Character NewCharacter (string name) {
 			var character = new Character (Guid.NewGuid (), name);
 			Test.Database.ExecuteNonQuery ("INSERT INTO [Character]([CUID], [Name]) VALUES(:CUID, :Name);", new SQLiteRow {
@@ -218,7 +216,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		}
 	}
 
-	// クラス
+	/// <summary>クラス</summary>
 	public enum JobClass {
 		Sponger,
 		Wizard,
@@ -228,7 +226,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		Lancer,
 	}
 
-	// パーティメンバー
+	/// <summary>パーティメンバー</summary>
 	public class Member {
 		public int Order;
 		public Character Character;
@@ -242,7 +240,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 			this.Message = message;
 		}
 
-		// 全データ取得
+		/// <summary>全データ取得</summary>
 		public static SQLiteTable GetTable (Guid puid = default (Guid)) {
 			if (puid == default (Guid)) {
 				return Test.Database.ExecuteQuery ("SELECT * FROM [RichMember];");
@@ -251,7 +249,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 			}
 		}
 
-		// パーティIDと番号を指定して既存のメンバーを生成
+		/// <summary>パーティIDと番号を指定して既存のメンバーを生成</summary>
 		public Member (Guid puid, int order) {
 			var table = Test.Database.ExecuteQuery ("SELECT * FROM [Member] WHERE [PUID]=:PUID AND [Order]=:Order;", new SQLiteRow {
 				{ "PUID", puid },
@@ -263,7 +261,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 			this.Message = table.Top.GetColumn ("Message");
 		}
 
-		// キャラとクラスを指定して新しいメンバーを作る
+		/// <summary>キャラとクラスを指定して新しいメンバーを作る</summary>
 		public static Member NewMember (Guid puid, int order, Character character, JobClass jobclass, string message = "") {
 			var member = new Member (order, character, jobclass, message);
 			Test.Database.ExecuteNonQuery ("INSERT INTO [Member]([PUID], [Order], [CUID], [Class], [Message]) VALUES(:PUID, :Order, :CUID, :Class, :Message);", new SQLiteRow {
@@ -277,7 +275,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		}
 	}
 
-	// パーティ
+	/// <summary>パーティ</summary>
 	public class Party {
 		public Guid PUID;
 		public string Title;
@@ -292,12 +290,12 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 			this.Members = new List<Member> { };
 		}
 
-		// 全データ取得
+		/// <summary>全データ取得</summary>
 		public static SQLiteTable GetTable () {
 			return Test.Database.ExecuteQuery ("SELECT * FROM [RichParty];");
 		}
 
-		// IDを指定して既存のパーティを生成
+		/// <summary>IDを指定して既存のパーティを生成</summary>
 		public Party (Guid puid) {
 			var table = Test.Database.ExecuteQuery ("SELECT * FROM [RichParty] WHERE [PUID]=:PUID;", new SQLiteRow { { "PUID", puid }, });
 			this.PUID = puid;
@@ -308,7 +306,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 			this.Members = orders.ConvertAll (order => new Member (this.PUID, order));
 		}
 
-		// タイトルを与えて新しいパーティを作る
+		/// <summary>タイトルを与えて新しいパーティを作る</summary>
 		public static Party NewParty (string title, string message = "") {
 			var party = new Party (Guid.NewGuid (), title, message);
 			Test.Database.ExecuteNonQuery ("INSERT INTO [Party]([PUID], [Title], [Message]) VALUES(:PUID, :Title, :Message);", new SQLiteRow {
@@ -319,12 +317,13 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 			return party;
 		}
 
-		// パーティにメンバーを加える
+		/// <summary>パーティにメンバーを加える</summary>
 		public void Add (Character character, JobClass jobclass, string message) {
 			var newMember = Member.NewMember (this.PUID, this.Members.Count, character, jobclass, message);
 			this.Members.Add (newMember);
 		}
 
+		/// <summary>文字列化</summary>
 		public override string ToString () {
 			var str = new List<string> { };
 			str.Add ($"パーティ[{this.Title}]「{this.Message}」");

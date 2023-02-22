@@ -12,18 +12,18 @@
 
 # 前提
 ### 環境
-- Unity 2021.3.8f1 (LTS)
-- SQlite 3.33.0
-- C# 6
-    - 文字列補完(string interpolation)を使用しています。
-    - 必要なら、`PlayerSettings`で`Scripting Runtime Version`を`4.x`に設定してください。
+- Unity 2021.3.19f1 (LTS)
+- SQlite 3.41.0.
 
 ### SQLite
 - SQLiteは、SQLのサブセットが使えるスタンドアローンなデータベース管理システムです。
     - Windows、MacOS、Android、iOSなどに対応しています。
 - [公式サイト](https://www.sqlite.org/index.html)
 
-### SQLiteUnityKit
+#### 更新手順
+- [UnityでSQLiteをAndroid(64bit対応)向けに導入する](https://qiita.com/tetr4lab/items/729008c94daaff82833e) (Qiita)
+
+### SQLiteUnityKit (fork元)
 - SQLiteUnityKitは、UnityからSQLiteを使用するためのフレームワークです。
 - [リポジトリ](https://github.com/Busta117/SQLiteUnityKit) (GitHub)
 
