@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.ObjectModel;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -19,34 +18,36 @@ using UnityEngine.Networking;
  * */
 namespace SQLiteUnity {
 
-	public class SQLite : IDisposable {
+	/// <summary>プラグインアクセス</summary>
+	internal static class SQLiteEntry {
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_open")] public static extern SQLiteResultCode sqlite3_open (string filename, out IntPtr db);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_close")] public static extern SQLiteResultCode sqlite3_close (IntPtr db);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_prepare_v2")] public static extern SQLiteResultCode sqlite3_prepare_v2 (IntPtr db, string zSql, int nByte, out IntPtr ppStmpt, IntPtr pzTail);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_step")] public static extern SQLiteResultCode sqlite3_step (IntPtr statement);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_finalize")] public static extern SQLiteResultCode sqlite3_finalize (IntPtr statement);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_count")] public static extern int sqlite3_column_count (IntPtr statement);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_name")] public static extern IntPtr sqlite3_column_name (IntPtr statement, int iCol);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_type")] public static extern SQLiteColumnType sqlite3_column_type (IntPtr statement, int iCol);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_int")] public static extern int sqlite3_column_int (IntPtr statement, int iCol);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_text")] public static extern IntPtr sqlite3_column_text (IntPtr statement, int iCol);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_double")] public static extern double sqlite3_column_double (IntPtr statement, int iCol);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_blob")] public static extern IntPtr sqlite3_column_blob (IntPtr statement, int iCol);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_bytes")] public static extern int sqlite3_column_bytes (IntPtr statement, int iCol);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_exec")] public static extern SQLiteResultCode sqlite3_exec (IntPtr db, string sql, IntPtr callback, IntPtr args, out IntPtr errorMessage);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_parameter_index")] public static extern int sqlite3_bind_parameter_index (IntPtr statement, string key);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_int")] public static extern SQLiteResultCode sqlite3_bind_int (IntPtr statement, int index, int val);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_text")] public static extern SQLiteResultCode sqlite3_bind_text (IntPtr statement, int index, byte [] value, int length, IntPtr freeType);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_blob")] public static extern SQLiteResultCode sqlite3_bind_blob (IntPtr statement, int index, byte [] value, int length, IntPtr freeType);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_double")] public static extern SQLiteResultCode sqlite3_bind_double (IntPtr statement, int index, double value);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_null")] public static extern SQLiteResultCode sqlite3_bind_null (IntPtr statement, int index);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_free")] public static extern SQLiteResultCode sqlite3_free (IntPtr memory);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_errmsg")] public static extern IntPtr sqlite3_errmsg (IntPtr db);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_errcode")] public static extern SQLiteResultCode sqlite3_errcode (IntPtr db);
+		[DllImport ("sqlite3", EntryPoint = "sqlite3_extended_errcode")] public static extern SQLiteResultCode sqlite3_extended_errcode (IntPtr db);
+	}
 
-		#region Plugin Access
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_open")] private static extern SQLiteResultCode sqlite3_open (string filename, out IntPtr db);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_close")] private static extern SQLiteResultCode sqlite3_close (IntPtr db);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_prepare_v2")] private static extern SQLiteResultCode sqlite3_prepare_v2 (IntPtr db, string zSql, int nByte, out IntPtr ppStmpt, IntPtr pzTail);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_step")] private static extern SQLiteResultCode sqlite3_step (IntPtr statement);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_finalize")] private static extern SQLiteResultCode sqlite3_finalize (IntPtr statement);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_count")] private static extern int sqlite3_column_count (IntPtr statement);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_name")] private static extern IntPtr sqlite3_column_name (IntPtr statement, int iCol);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_type")] private static extern SQLiteColumnType sqlite3_column_type (IntPtr statement, int iCol);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_int")] private static extern int sqlite3_column_int (IntPtr statement, int iCol);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_text")] private static extern IntPtr sqlite3_column_text (IntPtr statement, int iCol);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_double")] private static extern double sqlite3_column_double (IntPtr statement, int iCol);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_blob")] private static extern IntPtr sqlite3_column_blob (IntPtr statement, int iCol);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_column_bytes")] private static extern int sqlite3_column_bytes (IntPtr statement, int iCol);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_exec")] private static extern SQLiteResultCode sqlite3_exec (IntPtr db, string sql, IntPtr callback, IntPtr args, out IntPtr errorMessage);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_parameter_index")] private static extern int sqlite3_bind_parameter_index (IntPtr statement, string key);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_int")] private static extern SQLiteResultCode sqlite3_bind_int (IntPtr statement, int index, int val);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_text")] private static extern SQLiteResultCode sqlite3_bind_text (IntPtr statement, int index, byte [] value, int length, IntPtr freeType);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_blob")] private static extern SQLiteResultCode sqlite3_bind_blob (IntPtr statement, int index, byte [] value, int length, IntPtr freeType);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_double")] private static extern SQLiteResultCode sqlite3_bind_double (IntPtr statement, int index, double value);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_bind_null")] private static extern SQLiteResultCode sqlite3_bind_null (IntPtr statement, int index);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_free")] private static extern SQLiteResultCode sqlite3_free (IntPtr memory);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_errmsg")] private static extern IntPtr sqlite3_errmsg (IntPtr db);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_errcode")] private static extern SQLiteResultCode sqlite3_errcode (IntPtr db);
-		[DllImport ("sqlite3", EntryPoint = "sqlite3_extended_errcode")] private static extern SQLiteResultCode sqlite3_extended_errcode (IntPtr db);
-		#endregion
+	/// <summary>SQLiteハンドラ</summary>
+	public class SQLite<TTable, TRow> : IDisposable where TTable : SQLiteTable<TRow>, new () where TRow : SQLiteRow, new () {
 
 		/// <summary>コネクションがある</summary>
 		public bool IsOpen {
@@ -93,7 +94,7 @@ namespace SQLiteUnity {
 		/// <summary>DBを開く</summary>
 		private void Open () {
 			if (!IsOpen) {
-				var result = sqlite3_open (_pathDB, out _ptrSQLiteDB);
+				var result = SQLiteEntry.sqlite3_open (_pathDB, out _ptrSQLiteDB);
 				if (result != SQLiteResultCode.SQLITE_OK) {
 					IsOpen = false;
 					throw new SQLiteException ($"Could not open database file: {_pathDB} {result}");
@@ -104,7 +105,7 @@ namespace SQLiteUnity {
 		/// <summary>DBを閉じる</summary>
 		private void Close () {
 			if (IsOpen) {
-				sqlite3_close (_ptrSQLiteDB);
+				SQLiteEntry.sqlite3_close (_ptrSQLiteDB);
 				IsOpen = false;
 			}
 		}
@@ -112,44 +113,44 @@ namespace SQLiteUnity {
 		/// <summary>結果の不要なステートメントを実行する</summary>
 		private void ExecuteNonQuery (Statement statement) {
 			if (!IsOpen) { return; }
-			var result = sqlite3_step (statement.Pointer);
+			var result = SQLiteEntry.sqlite3_step (statement.Pointer);
 			if (result != SQLiteResultCode.SQLITE_DONE) {
 				throw new SQLiteException ($"Could not execute SQL statement. {result}");
 			}
 		}
 
 		/// <summary>ステートメントを実行して結果行列を取得</summary>
-		private SQLiteTable ExecuteQuery (Statement statement) {
+		private TTable ExecuteQuery (Statement statement) {
 			if (!IsOpen) { return null; }
 			var pointer = statement.Pointer;
-			var dataTable = new SQLiteTable ();
+			var dataTable = new TTable ();
 			// 列の生成
-			int columnCount = sqlite3_column_count (pointer);
+			int columnCount = SQLiteEntry.sqlite3_column_count (pointer);
 			for (int i = 0; i < columnCount; i++) {
-				string columnName = Marshal.PtrToStringAnsi (sqlite3_column_name (pointer, i));
+				string columnName = Marshal.PtrToStringAnsi (SQLiteEntry.sqlite3_column_name (pointer, i));
 				dataTable.AddColumn (columnName, SQLiteColumnType.SQLITE_UNKNOWN);
 			}
 			// 行の生成
 			object [] row = new object [columnCount];
-			while (sqlite3_step (pointer) == SQLiteResultCode.SQLITE_ROW) {
+			while (SQLiteEntry.sqlite3_step (pointer) == SQLiteResultCode.SQLITE_ROW) {
 				for (int i = 0; i < columnCount; i++) {
 					if (dataTable.Columns [i].Type == SQLiteColumnType.SQLITE_UNKNOWN || dataTable.Columns [i].Type == SQLiteColumnType.SQLITE_NULL) {
-						dataTable.Columns [i].Type = sqlite3_column_type (pointer, i);
+						dataTable.Columns [i].Type = SQLiteEntry.sqlite3_column_type (pointer, i);
 					}
 					switch (dataTable.Columns [i].Type) {
 						case SQLiteColumnType.SQLITE_INTEGER:
-							row [i] = sqlite3_column_int (pointer, i);
+							row [i] = SQLiteEntry.sqlite3_column_int (pointer, i);
 							break;
 						case SQLiteColumnType.SQLITE_TEXT:
-							IntPtr text = sqlite3_column_text (pointer, i);
+							IntPtr text = SQLiteEntry.sqlite3_column_text (pointer, i);
 							row [i] = Marshal.PtrToStringAnsi (text);
 							break;
 						case SQLiteColumnType.SQLITE_FLOAT:
-							row [i] = sqlite3_column_double (pointer, i);
+							row [i] = SQLiteEntry.sqlite3_column_double (pointer, i);
 							break;
 						case SQLiteColumnType.SQLITE_BLOB:
-							IntPtr blob = sqlite3_column_blob (pointer, i);
-							int size = sqlite3_column_bytes (pointer, i);
+							IntPtr blob = SQLiteEntry.sqlite3_column_blob (pointer, i);
+							int size = SQLiteEntry.sqlite3_column_bytes (pointer, i);
 							byte [] data = new byte [size];
 							Marshal.Copy (blob, data, 0, size);
 							row [i] = data;
@@ -171,10 +172,10 @@ namespace SQLiteUnity {
 		private void ExecuteTransaction (string query) {
 			if (!IsOpen) { return; }
 			IntPtr errorMessage;
-			var result = sqlite3_exec (_ptrSQLiteDB, query, IntPtr.Zero, IntPtr.Zero, out errorMessage);
+			var result = SQLiteEntry.sqlite3_exec (_ptrSQLiteDB, query, IntPtr.Zero, IntPtr.Zero, out errorMessage);
 			if (result != SQLiteResultCode.SQLITE_OK || errorMessage != IntPtr.Zero) {
-				var str = $"Could not execute SQL statement. {result} '{errorMessage}' {sqlite3_extended_errcode (_ptrSQLiteDB)}";
-				sqlite3_free (errorMessage);
+				var str = $"Could not execute SQL statement. {result} '{errorMessage}' {SQLiteEntry.sqlite3_extended_errcode (_ptrSQLiteDB)}";
+				SQLiteEntry.sqlite3_free (errorMessage);
 				throw new SQLiteException (str);
 			}
 		}
@@ -182,12 +183,12 @@ namespace SQLiteUnity {
 		#region HighLevelAPI
 
 		/// <summary>単文の変数を差し替えながら順に実行</summary>
-		public void ExecuteNonQuery (string query, SQLiteTable param) {
-			foreach (SQLiteRow row in param) { ExecuteNonQuery (query, row); }
+		public void ExecuteNonQuery (string query, TTable param) {
+			foreach (TRow row in param) { ExecuteNonQuery (query, row); }
 		}
 
 		/// <summary>単文を実行</summary>
-		public void ExecuteNonQuery (string query, SQLiteRow param = null) {
+		public void ExecuteNonQuery (string query, TRow param = null) {
 			var close = !IsOpen; // 元の状態
 			Open ();
 			try {
@@ -206,8 +207,8 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>単文を実行して結果を返す</summary>
-		public SQLiteTable ExecuteQuery (string query, SQLiteRow param = null) {
-			SQLiteTable result = null;
+		public TTable ExecuteQuery (string query, TRow param = null) {
+			TTable result = null;
 			var close = !IsOpen; // 元の状態
 			Open ();
 			try {
@@ -251,20 +252,20 @@ namespace SQLiteUnity {
 
 		/// <summary>SQLステートメント</summary>
 		private class Statement : IDisposable {
-			private SQLite _database;
+			private SQLite<TTable, TRow> _database;
 			public IntPtr Pointer { get { return pointer; } }
 			private IntPtr pointer;
 
 			/// <summary>SQLステートメントの生成</summary>
-			public Statement (SQLite database, string query, SQLiteRow param = null) {
+			public Statement (SQLite<TTable, TRow> database, string query, TRow param = null) {
                 Statement statement = this;
                 statement._database = database;
 				pointer = IntPtr.Zero;
 				if (_database != null && !database.IsOpen) {
 					throw new SQLiteException ("SQLite database is not open.");
 				}
-				if (sqlite3_prepare_v2 (_database._ptrSQLiteDB, query, System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount (query), out pointer, IntPtr.Zero) != SQLiteResultCode.SQLITE_OK) {
-					IntPtr errorMsg = sqlite3_errmsg (_database._ptrSQLiteDB);
+				if (SQLiteEntry.sqlite3_prepare_v2 (_database._ptrSQLiteDB, query, System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount (query), out pointer, IntPtr.Zero) != SQLiteResultCode.SQLITE_OK) {
+					IntPtr errorMsg = SQLiteEntry.sqlite3_errmsg (_database._ptrSQLiteDB);
 					throw new SQLiteException (Marshal.PtrToStringAnsi (errorMsg));
 				}
 				if (param != null) {
@@ -275,37 +276,37 @@ namespace SQLiteUnity {
 			/// <summary>破棄</summary>
 			public void Dispose () {
 				if (_database != null && pointer != IntPtr.Zero) {
-					var result = sqlite3_finalize (pointer);
+					var result = SQLiteEntry.sqlite3_finalize (pointer);
 					if (result != SQLiteResultCode.SQLITE_OK) {
-						throw new SQLiteException ($"Could not finalize SQL statement. {result} {sqlite3_extended_errcode (_database._ptrSQLiteDB)}");
+						throw new SQLiteException ($"Could not finalize SQL statement. {result} {SQLiteEntry.sqlite3_extended_errcode (_database._ptrSQLiteDB)}");
 					}
 				}
 			}
 
 			/// <summary>ステートメントにSQL引数をバインドする 必要なら':'が補われる</summary>
-			private void BindParameter (SQLiteRow param) {
+			private void BindParameter (TRow param) {
 				if (param != null) {
 					foreach (string key in param.Keys) {
 						object val = param [key];
 						string name = (key [0] == ':' || key [0] == '@' || key [0] == '$') ? key : $":{key}";
 						if (val == null) {
-							sqlite3_bind_null (pointer, sqlite3_bind_parameter_index (pointer, name));
+							SQLiteEntry.sqlite3_bind_null (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name));
 						} else if (val is string) {
-							sqlite3_bind_text (pointer, sqlite3_bind_parameter_index (pointer, name), System.Text.Encoding.UTF8.GetBytes ((string) val), System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount ((string) val), new IntPtr (-1));
+							SQLiteEntry.sqlite3_bind_text (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name), System.Text.Encoding.UTF8.GetBytes ((string) val), System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount ((string) val), new IntPtr (-1));
 						} else if (val is byte []) {
-							sqlite3_bind_text (pointer, sqlite3_bind_parameter_index (pointer, name), (byte []) val, ((byte []) val).Length, new IntPtr (-1));
+							SQLiteEntry.sqlite3_bind_text (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name), (byte []) val, ((byte []) val).Length, new IntPtr (-1));
 						} else if (val is float) {
-							sqlite3_bind_double (pointer, sqlite3_bind_parameter_index (pointer, name), (double) (float) val);
+							SQLiteEntry.sqlite3_bind_double (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name), (double) (float) val);
 						} else if (val is double) {
-							sqlite3_bind_double (pointer, sqlite3_bind_parameter_index (pointer, name), (double) val);
+							SQLiteEntry.sqlite3_bind_double (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name), (double) val);
 						} else if (val.IsInt32 ()) {
-							sqlite3_bind_int (pointer, sqlite3_bind_parameter_index (pointer, name), (int) val);
+							SQLiteEntry.sqlite3_bind_int (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name), (int) val);
 						} else { // その他の型
 							if (val.Equals (val.GetType ().GetDefaultValue ())) { // デフォルト値ならNULL
-								sqlite3_bind_null (pointer, sqlite3_bind_parameter_index (pointer, name));
+								SQLiteEntry.sqlite3_bind_null (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name));
 							} else { // 既定の文字列化
 								val = (val is DateTime) ? ((DateTime)val).ToString ("yyyy-MM-dd HH:mm:ss")  : val.ToString (); // 日時の文字列化書式を制御
-								sqlite3_bind_text (pointer, sqlite3_bind_parameter_index (pointer, name), System.Text.Encoding.UTF8.GetBytes ((string) val), System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount ((string) val), new IntPtr (-1));
+								SQLiteEntry.sqlite3_bind_text (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name), System.Text.Encoding.UTF8.GetBytes ((string) val), System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount ((string) val), new IntPtr (-1));
 							}
 						}
 					}
@@ -456,7 +457,10 @@ namespace SQLiteUnity {
 		};
 	}
 
-	/// <summary>行のデータ / バインドパラメータ</summary>
+	/// <summary>
+	/// 行のデータ / バインドパラメータ
+	///   必要ならさらに継承して拡張できる
+	/// </summary>
 	public class SQLiteRow : Dictionary<string, object> {
 
 		#region Static
@@ -471,7 +475,7 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>要素の連結</summary>
-		public SQLiteRow AddRange (SQLiteRow addition) {
+		public virtual SQLiteRow AddRange (SQLiteRow addition) {
 			foreach (var item in addition) { if (!ContainsKey (item.Key)) { Add (item.Key, item.Value); } }
 			return this;
 		}
@@ -497,23 +501,23 @@ namespace SQLiteUnity {
 	}
 
 	/// <summary>テーブルのデータ</summary>
-	public class SQLiteTable {
+	public class SQLiteTable<TRow> where TRow : SQLiteRow, new () {
 
 		/// <summary>列定義</summary>
 		public List<ColumnDefinition> Columns { get; protected set; }
 
 		/// <summary>行</summary>
-		public List<SQLiteRow> Rows { get; protected set; }
+		public List<TRow> Rows { get; protected set; }
 
 		#region Static
 		/// <summary>テーブルがnullまたは空</summary>
-		public static bool IsNullOrEmpty (SQLiteTable table) => (table == null || table.Rows.Count <= 0);
+		public static bool IsNullOrEmpty (SQLiteTable<TRow> table) => (table == null || table.Rows.Count <= 0);
 		#endregion
 
 		/// <summary>空の生成</summary>
 		public SQLiteTable () {
 			Columns = new List<ColumnDefinition> { };
-			Rows = new List<SQLiteRow> { };
+			Rows = new List<TRow> { };
 		}
 
 		/// <summary>列一覧からの生成</summary>
@@ -524,10 +528,10 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>先頭行</summary>
-		public SQLiteRow Top => (Rows.Count > 0) ? Rows [0] : null;
+		public TRow Top => (Rows.Count > 0) ? Rows [0] : null;
 
 		// 行にアクセスするインデクサ
-		public SQLiteRow this [int index] => (index >= 0 && index < Rows.Count) ? Rows [index] : null;
+		public TRow this [int index] => (index >= 0 && index < Rows.Count) ? Rows [index] : null;
 
 		// セルにアクセスするインデクサ (行番号と列番号)
 		public object this [int rowIndex, int columnIndex] {
@@ -561,7 +565,7 @@ namespace SQLiteUnity {
 			if (values.Length != Columns.Count) {
 				throw new IndexOutOfRangeException ("The number of values in the row must match the number of column");
 			}
-			var row = new SQLiteRow ();
+			var row = new TRow ();
 			for (int i = 0; i < values.Length; i++) {
 				row.Add (Columns [i].Name, values [i]);
 			}

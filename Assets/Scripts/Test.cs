@@ -10,7 +10,7 @@ namespace SQLiteTest {
 	public class Test : MonoBehaviour {
 
 		/// <summary>DB</summary>
-		public static SQLite Database;
+		public static SQLite<SQLiteTable<SQLiteRow>, SQLiteRow> Database;
 
 		/// <summary>出力先</summary>
 		public static Text Console;
@@ -27,10 +27,10 @@ namespace SQLiteTest {
 			Debug.Log ("Start");
 
 			// DB接続とテスト (初回は生成)
-			using (Database = new SQLite ("SQLiteTest.db", _creationSql)) {
+			using (Database = new SQLite<SQLiteTable<SQLiteRow>, SQLiteRow> ("SQLiteTest.db", _creationSql)) {
 
 				// 初回のみ
-				if (SQLiteTable.IsNullOrEmpty (Party.GetTable ())) {
+				if (SQLiteTable<SQLiteRow>.IsNullOrEmpty (Party.GetTable ())) {
 					// 適当にキャラを生成
 					var characters = new List<string> { "太郎", "花子", "二郎", "三郎" }.ConvertAll (name => Character.NewCharacter (name));
 
@@ -59,9 +59,9 @@ namespace SQLiteTest {
 		}
 
 		/// <summary>テーブルの出力</summary>
-		void DumpTable (string subject, SQLiteTable table) {
+		void DumpTable (string subject, SQLiteTable<SQLiteRow> table) {
 			if (!string.IsNullOrEmpty (subject)) { Console.text += $"--- Dump {subject} ---\n"; }
-			if (SQLiteTable.IsNullOrEmpty (table)) {
+			if (SQLiteTable<SQLiteRow>.IsNullOrEmpty (table)) {
 				Console.text += "ERROR\n";
 			} else {
 				for (var row = 0; row < table.Rows.Count; row++) {
@@ -194,7 +194,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable GetTable () {
+		public static SQLiteTable<SQLiteRow> GetTable () {
 			return Test.Database.ExecuteQuery ("SELECT * FROM [RichCharacter];");
 		}
 
@@ -241,7 +241,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable GetTable (Guid puid = default (Guid)) {
+		public static SQLiteTable<SQLiteRow> GetTable (Guid puid = default (Guid)) {
 			if (puid == default (Guid)) {
 				return Test.Database.ExecuteQuery ("SELECT * FROM [RichMember];");
 			} else {
@@ -291,7 +291,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable GetTable () {
+		public static SQLiteTable<SQLiteRow> GetTable () {
 			return Test.Database.ExecuteQuery ("SELECT * FROM [RichParty];");
 		}
 
