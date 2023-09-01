@@ -9,31 +9,59 @@ namespace SQLiteTest {
 
 	public class Test : MonoBehaviour {
 
+		/// <summary>DB path</summary>
+		private const string DbPath = "SQLiteTest.db";
+
 		/// <summary>DB</summary>
-		public static SQLite<SQLiteTable<SQLiteRow>, SQLiteRow> Database;
+		public static SQLite Database;
 
 		/// <summary>出力先</summary>
 		public static Text Console;
 
+		/// <summary>ボタン</summary>
+		private static List<Button> Buttons;
+
 		/// <summary>準備</summary>
 		private void Awake () {
-			Console = GetComponentInChildren<Text> ();
+			Console = transform.GetChild (1).GetComponentInChildren<Text> ();
+			var buttons = transform.GetChild (0).GetComponentsInChildren<Button> ();
+			if (buttons != null) {
+				Buttons = new List<Button> (buttons);
+				foreach (var button in buttons) {
+					switch (button.name) {
+						case "DropButton":
+							button.onClick.AddListener (() => {
+								System.IO.File.Delete (DbPath);
+								Console.text = System.IO.File.Exists (DbPath) ? "Exists" : "Droped";
+							});
+							break;
+						case "TestButton":
+							button.onClick.AddListener (DoTest);
+							break;
+					}
+				}
+			}
+		}
+
+		/// <summary>開始</summary>
+		private void Start () {
+			DoTest ();
 		}
 
 		/// <summary>テスト</summary>
-		private void Start () {
+		private void DoTest () {
 			// 開始宣言
-			Console.text = "SQLiteUnity Test Start\n\n";
+			Console.text = $"SQLiteUnity Test Start {DateTime.Now} ({Time.frameCount})\n\n";
 			Debug.Log ("Start");
 
 			// DB接続とテスト (初回は生成)
-			using (Database = new SQLite<SQLiteTable<SQLiteRow>, SQLiteRow> ("SQLiteTest.db", _creationSql)) {
+			using (Database = new SQLite (DbPath, _creationSql)) {
 
 				// バージョン確認
 				DumpTable ("バージョン", Database.ExecuteQuery ("select sqlite_version();"));
 
 				// 初回のみ
-				if (SQLiteTable<SQLiteRow>.IsNullOrEmpty (Party.GetTable ())) {
+				if (SQLiteTable.IsNullOrEmpty (Party.GetTable ())) {
 					// 適当にキャラを生成
 					var characters = new List<string> { "太郎", "花子", "二郎", "三郎" }.ConvertAll (name => Character.NewCharacter (name));
 
@@ -48,8 +76,9 @@ namespace SQLiteTest {
 					P2.Add (characters [1], JobClass.Archer, "よろしくお願いします");
 				}
 				// 状況の取得と表示
+				Console.text += $"<color=lightblue><size=24>--- パーティ ---</size></color>\n";
 				foreach (SQLiteRow row in Party.GetTable ()) {
-					Console.text += $"{new Party (row.GetColumn (Guid.Parse, "PUID"))}\n=====\n";
+					Console.text += $"{new Party (row.GetColumn (Guid.Parse, "PUID"))}\n<color=lightblue>=====</color>\n";
 				}
 				this.DumpTable ("パーティ", Party.GetTable ());
 				this.DumpTable ("メンバー", Member.GetTable ());
@@ -62,35 +91,35 @@ namespace SQLiteTest {
 		}
 
 		/// <summary>テーブルの出力</summary>
-		void DumpTable (string subject, SQLiteTable<SQLiteRow> table) {
-			if (!string.IsNullOrEmpty (subject)) { Console.text += $"--- Dump {subject} ---\n"; }
-			if (SQLiteTable<SQLiteRow>.IsNullOrEmpty (table)) {
-				Console.text += "ERROR\n";
+		void DumpTable (string subject, SQLiteTable table) {
+			if (!string.IsNullOrEmpty (subject)) { Console.text += $"<color=aqua><size=24>--- Table {subject} ---</size></color>\n"; }
+			if (SQLiteTable.IsNullOrEmpty (table)) {
+				Console.text += "<color=red>ERROR</color>\n";
 			} else {
 				for (var row = 0; row < table.Rows.Count; row++) {
-					Console.text += $"#{row + 1}/{table.Rows.Count}\n";
+					Console.text += $"<color=aqua>#{row + 1}/{table.Rows.Count}</color>\n";
 					foreach (ColumnDefinition column in table.Columns) {
 						if (table [row, column.Name] != null) {
-							Console.text += $"{column.Name} {ColumnDefinition.ColumnTypeName [column.Type]}: {table [row, column.Name]}\n";
+							Console.text += $"<color=orange>{column.Name}</color> {ColumnDefinition.ColumnTypeName [column.Type]}: {table [row, column.Name]}\n";
 						}
 					}
 				}
 			}
-			Console.text += "===\n";
+			Console.text += "<color=aqua>===</color>\n";
 			Debug.Log (table);
 		}
 		void DumpTable (string subject, SQLiteRow row) {
-			if (!string.IsNullOrEmpty (subject)) { Console.text += $"--- Dump {subject} ---\n"; }
+			if (!string.IsNullOrEmpty (subject)) { Console.text += $"<color=aqua><size=24>--- Row {subject} ---</size></color>\n"; }
 			if (SQLiteRow.IsNullOrEmpty (row)) {
-				Console.text += "ERROR\n";
+				Console.text += "<color=red>ERROR</color>\n";
 			} else {
 				foreach (string name in row.Keys) {
 					if (row [name] != null) {
-						Console.text += $"{name}: {row [name]}\n";
+						Console.text += $"<color=orange>{name}:</color> {row [name]}\n";
 					}
 				}
 			}
-			Console.text += "===\n";
+			Console.text += "<color=aqua>===</color>\n";
 			Debug.Log (row);
 		}
 
@@ -185,7 +214,6 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 
 	}
 
-
 	/// <summary>キャラ</summary>
 	public class Character {
 		public Guid CUID; // ID
@@ -197,7 +225,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable<SQLiteRow> GetTable () {
+		public static SQLiteTable GetTable () {
 			return Test.Database.ExecuteQuery ("SELECT * FROM [RichCharacter];");
 		}
 
@@ -244,7 +272,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable<SQLiteRow> GetTable (Guid puid = default (Guid)) {
+		public static SQLiteTable GetTable (Guid puid = default (Guid)) {
 			if (puid == default (Guid)) {
 				return Test.Database.ExecuteQuery ("SELECT * FROM [RichMember];");
 			} else {
@@ -294,7 +322,7 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable<SQLiteRow> GetTable () {
+		public static SQLiteTable GetTable () {
 			return Test.Database.ExecuteQuery ("SELECT * FROM [RichParty];");
 		}
 
