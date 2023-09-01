@@ -29,6 +29,9 @@ namespace SQLiteTest {
 			// DB接続とテスト (初回は生成)
 			using (Database = new SQLite<SQLiteTable<SQLiteRow>, SQLiteRow> ("SQLiteTest.db", _creationSql)) {
 
+				// バージョン確認
+				DumpTable ("バージョン", Database.ExecuteQuery ("select sqlite_version();"));
+
 				// 初回のみ
 				if (SQLiteTable<SQLiteRow>.IsNullOrEmpty (Party.GetTable ())) {
 					// 適当にキャラを生成
