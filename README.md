@@ -17,7 +17,7 @@
 
 ### SQLite
 - SQLiteは、SQLのサブセットが使えるスタンドアローンなデータベース管理システムです。
-    - Windows、MacOS、Android、iOSなどに対応しています。
+    - Windows、macOS、Android、iOSなどに対応しています。
 - [公式サイト](https://www.sqlite.org/index.html)
 
 #### 更新手順
