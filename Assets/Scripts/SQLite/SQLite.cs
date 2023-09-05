@@ -250,8 +250,12 @@ namespace SQLiteUnity {
 
 		#endregion
 
+		/// <summary>デフォルトのバインド前置文字</summary>
+		public static readonly char BIND_PREFIX = ':';
+
 		/// <summary>SQLステートメント</summary>
 		private class Statement : IDisposable {
+
 			private SQLite _database;
 			public IntPtr Pointer { get { return pointer; } }
 			private IntPtr pointer;
@@ -283,12 +287,12 @@ namespace SQLiteUnity {
 				}
 			}
 
-			/// <summary>ステートメントにSQL引数をバインドする 必要なら':'が補われる</summary>
+			/// <summary>ステートメントにSQL引数をバインドする 必要ならBIND_PREFIXが補われる</summary>
 			private void BindParameter (SQLiteRow param) {
 				if (param != null) {
 					foreach (string key in param.Keys) {
 						object val = param [key];
-						string name = (key [0] == ':' || key [0] == '@' || key [0] == '$') ? key : $":{key}";
+						string name = (key [0] == ':' || key [0] == '@' || key [0] == '$') ? key : $"{BIND_PREFIX}{key}";
 						if (val == null) {
 							SQLiteEntry.sqlite3_bind_null (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name));
 						} else if (val is string) {

@@ -57,7 +57,7 @@ namespace SQLiteUnity {
 		public static string SQLiteBind (this string query, SQLiteRow param) {
 			foreach (string key in param.Keys) {
 				object val = param [key];
-				string name = (key [0] == ':' || key [0] == '@' || key [0] == '$') ? key : $":{key}";
+				string name = (key [0] == ':' || key [0] == '@' || key [0] == '$') ? key : $"{SQLite.BIND_PREFIX}{key}";
 				string str;
 				if (val == null) {
 					str = "NULL";
