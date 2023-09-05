@@ -228,7 +228,7 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>複文を一括実行し、誤りがあれば巻き戻す</summary>
-		public bool TransactionQueries<T> (T query) where T : IEnumerable<string> => TransactionQueries (string.Join ("\n", query));
+		public bool TransactionQueries (IEnumerable<string> query) => TransactionQueries (string.Join ("\n", query));
 
 		/// <summary>複文を一括実行し、誤りがあれば巻き戻す</summary>
 		public bool TransactionQueries (string query) {
