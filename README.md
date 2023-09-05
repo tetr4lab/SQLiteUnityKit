@@ -43,6 +43,9 @@
         - トランザクションでも擬似的なバインドが使えるようになっています。
     - "Test.cs"
         - デモ用スクリプトです。
+        - Test 1: ゲームっぽい関係性のあるデータ
+        - Test 2: シンプルで多めのデータ
+        - Test 3: [SQL学習型じゃんけん](https://qiita.com/tetr4lab/items/656f8f9d3ea68bbe76ec) (Qiita)
 - `Assets/Prefabs/Console.prefab`
     - デモ用プレハブです。
 - `Assets/Scenes/SQLite_Test.unity`
