@@ -4,13 +4,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using SQLiteUnity;
+using System.IO;
+using UnityEngine.XR;
 
 namespace SQLiteTest {
 
 	public class Test : MonoBehaviour {
 
-		/// <summary>DB path</summary>
-		private const string DbPath = "SQLiteTest.db";
+		/// <summary>DB path 1</summary>
+		private const string DbPath1 = "SQLiteTest.db";
+
+		/// <summary>DB path 2</summary>
+		private const string DbPath2 = "SQLiteTest2.db";
+
+		/// <summary>DB path 3</summary>
+		private const string DbPath3 = "SQLiteTest3.db";
 
 		/// <summary>DB</summary>
 		public static SQLite Database;
@@ -31,12 +39,33 @@ namespace SQLiteTest {
 					switch (button.name) {
 						case "DropButton":
 							button.onClick.AddListener (() => {
-								System.IO.File.Delete (DbPath);
-								Console.text = System.IO.File.Exists (DbPath) ? "Exists" : "Droped";
+								var path1 = Path.Combine (Application.persistentDataPath, DbPath1);
+								var path2 = Path.Combine (Application.persistentDataPath, DbPath2);
+								var path3 = Path.Combine (Application.persistentDataPath, DbPath3);
+								System.IO.File.Delete (path1);
+								System.IO.File.Delete (path2);
+								System.IO.File.Delete (path3);
+								Console.text = string.Join("\n", new [] {
+									$"{DbPath1}: {(System.IO.File.Exists (path1) ? "<color=red>Exists</color>" : "<color=aqua>Droped</color>")}",
+									$"{DbPath2}: {(System.IO.File.Exists (path2) ? "<color=red>Exists</color>" : "<color=aqua>Droped</color>")}",
+									$"{DbPath3}: {(System.IO.File.Exists (path3) ? "<color=red>Exists</color>" : "<color=aqua>Droped</color>")}",
+								});
 							});
 							break;
-						case "TestButton":
-							button.onClick.AddListener (DoTest);
+						case "Test1Button":
+							button.onClick.AddListener (() => DoTest (1, DbPath1, _creationSql));
+							break;
+						case "Test2Button":
+							button.onClick.AddListener (() => DoTest (2, DbPath2, _creationSql2));
+							break;
+						case "GooButton":
+							button.onClick.AddListener (() => DoTest (31, DbPath3, _creationSql3));
+							break;
+						case "ChokiButton":
+							button.onClick.AddListener (() => DoTest (32, DbPath3, _creationSql3));
+							break;
+						case "ParButton":
+							button.onClick.AddListener (() => DoTest (33, DbPath3, _creationSql3));
 							break;
 					}
 				}
@@ -45,49 +74,78 @@ namespace SQLiteTest {
 
 		/// <summary>開始</summary>
 		private void Start () {
-			DoTest ();
+			DoTest (1, DbPath1, _creationSql);
 		}
 
 		/// <summary>テスト</summary>
-		private void DoTest () {
+		private void DoTest (int number, string path, string sql) {
 			// 開始宣言
-			Console.text = $"SQLiteUnity Test Start {DateTime.Now} ({Time.frameCount})\n\n";
-			Debug.Log ("Start");
-
+			Console.text = $"SQLiteUnity Test [{number}] Start {DateTime.Now}\n{Path.Combine (Application.persistentDataPath, path)}\n\n";
+			Debug.Log ($"Start [{number}]");
 			// DB接続とテスト (初回は生成)
-			using (Database = new SQLite (DbPath, _creationSql)) {
-
+			using (Database = new SQLite (path, sql)) {
 				// バージョン確認
 				DumpTable ("バージョン", Database.ExecuteQuery ("select sqlite_version();"));
+				switch (number) {
+					case 1:
+						// 初回のみ
+						if (SQLiteTable.IsNullOrEmpty (Party.GetTable ())) {
+							// 適当にキャラを生成
+							var characters = new List<string> { "太郎", "花子", "二郎", "三郎" }.ConvertAll (name => Character.NewCharacter (name));
 
-				// 初回のみ
-				if (SQLiteTable.IsNullOrEmpty (Party.GetTable ())) {
-					// 適当にキャラを生成
-					var characters = new List<string> { "太郎", "花子", "二郎", "三郎" }.ConvertAll (name => Character.NewCharacter (name));
-
-					// 適当にパーティを生成してメンバーを追加
-					var P1 = Party.NewParty ("不滅の旅団", "ガンガンいこうぜ!");
-					P1.Add (characters [0], JobClass.Fighter, "俺がリーダーだぜ!");
-					P1.Add (characters [1], JobClass.Cleric, "紅一点");
-					P1.Add (characters [2], JobClass.Archer, "…");
-					var P2 = Party.NewParty ("肉球", "まったり");
-					P2.Add (characters [3], JobClass.Fighter, "のんびりやりましょう");
-					P2.Add (characters [2], JobClass.Cleric, "…");
-					P2.Add (characters [1], JobClass.Archer, "よろしくお願いします");
+							// 適当にパーティを生成してメンバーを追加
+							var P1 = Party.NewParty ("不滅の旅団", "ガンガンいこうぜ!");
+							P1.Add (characters [0], JobClass.Fighter, "俺がリーダーだぜ!");
+							P1.Add (characters [1], JobClass.Cleric, "紅一点");
+							P1.Add (characters [2], JobClass.Archer, "…");
+							var P2 = Party.NewParty ("肉球", "まったり");
+							P2.Add (characters [3], JobClass.Fighter, "のんびりやりましょう");
+							P2.Add (characters [2], JobClass.Cleric, "…");
+							P2.Add (characters [1], JobClass.Archer, "よろしくお願いします");
+						}
+						// 状況の取得と表示
+						Console.text += $"<color=lightblue><size=24>--- パーティ ---</size></color>\n";
+						foreach (SQLiteRow row in Party.GetTable ()) {
+							Console.text += $"{new Party (row.GetColumn (Guid.Parse, "PUID"))}\n<color=lightblue>=====</color>\n";
+						}
+						DumpTable ("パーティ", Party.GetTable ());
+						DumpTable ("メンバー", Member.GetTable ());
+						DumpTable ("キャラクタ", Character.GetTable ());
+						break;
+					case 2:
+						// 生成数
+						var COUNT = 1000;
+						// 既存数
+						var count = (int) Database.ExecuteQuery ("SELECT count(Serial) FROM Test") [0, 0];
+						// パラメータの型を生成
+						var paramTable = new SQLiteTable (new [] {
+							new ColumnDefinition ("Serial", SQLiteColumnType.SQLITE_TEXT),
+							new ColumnDefinition ("Guid", SQLiteColumnType.SQLITE_TEXT),
+						});
+						// パラメータを生成
+						for (var i = 0; i < COUNT; i++) {
+							paramTable.AddRow (new object [] { count + i, Guid.NewGuid (), });
+						}
+						// 日時
+						var startTime = DateTime.Now;
+						// パラメータを差し替えながらレコードを生成
+						Database.ExecuteNonQuery ("INSERT OR REPLACE INTO Test ([Serial], [Guid]) VALUES(:Serial, :Guid);", paramTable);
+						// 生成に要した時間
+						Console.text += $"Duration {DateTime.Now - startTime} / {COUNT}\n";
+						// 結果
+						DumpTable ("末尾100行", Database.ExecuteQuery ("SELECT * FROM Test LIMIT 100 OFFSET :offset;", new SQLiteRow { { "offset", count + COUNT - 100 }, }));
+						break;
+					case 31:
+					case 32:
+					case 33:
+						DumpTable ("PCの手", Database.ExecuteQuery ("SELECT name FROM janken_decision;"));
+						Database.ExecuteNonQuery ("INSERT INTO janken_log ([hand]) VALUES (:hand);", new SQLiteRow { { "hand", number - 30 } });
+						DumpTable ("次のPCの手", Database.ExecuteQuery ("SELECT name FROM janken_decision;"));
+						DumpTable ("人の手のログ", Database.ExecuteQuery ("SELECT * FROM janken_log"));
+						DumpTable ("人の手の頻度", Database.ExecuteQuery ("SELECT * FROM janken_frq"));
+						break;
 				}
-				// 状況の取得と表示
-				Console.text += $"<color=lightblue><size=24>--- パーティ ---</size></color>\n";
-				foreach (SQLiteRow row in Party.GetTable ()) {
-					Console.text += $"{new Party (row.GetColumn (Guid.Parse, "PUID"))}\n<color=lightblue>=====</color>\n";
-				}
-				this.DumpTable ("パーティ", Party.GetTable ());
-				this.DumpTable ("メンバー", Member.GetTable ());
-				this.DumpTable ("キャラクタ", Character.GetTable ());
 			}
-
-			// 保存場所の報告
-			Console.text += $"\npath {Application.persistentDataPath}";
-			Debug.Log (Application.persistentDataPath);
 		}
 
 		/// <summary>テーブルの出力</summary>
@@ -212,6 +270,97 @@ CREATE TRIGGER [UpdateParty] AFTER UPDATE ON [Party] FOR EACH ROW
 		END;
 ";
 
+		private const string _creationSql2 = @"
+CREATE TABLE IF NOT EXISTS Test (
+[Serial] INTEGER NOT NULL PRIMARY KEY, -- ID
+[Guid] TEXT, -- 名前
+[Created] TEXT CHECK([Created] GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]'), -- 作成日時
+[Modified] TEXT CHECK([Modified] GLOB '[0-9][0-9][0-9][0-9]-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]:[0-5][0-9]') -- 更新日時
+);";
+
+		private const string _creationSql3 = @"
+-- 手の呼び名
+DROP TABLE IF EXISTS janken_names;
+CREATE TABLE IF NOT EXISTS janken_names (
+    hand INTEGER UNIQUE NOT NULL CHECK (hand >= 1 AND hand <= 3), 
+    name TEXT UNIQUE NOT NULL
+);
+INSERT INTO janken_names VALUES
+    (1, 'Goo'),
+    (2, 'Choki'),
+    (3, 'Par')
+;
+
+-- 相手の手のログ
+DROP TABLE IF EXISTS janken_log;
+CREATE TABLE IF NOT EXISTS janken_log (
+    number INTEGER PRIMARY KEY AUTOINCREMENT,
+    hand INTEGER NOT NULL CHECK (hand >= 1 AND hand <= 3)
+);
+INSERT INTO janken_log (hand) VALUES 
+    (abs(random() % 3) + 1),
+    (abs(random() % 3) + 1),
+    (abs(random() % 3) + 1),
+    (abs(random() % 3) + 1),
+    (abs(random() % 3) + 1)
+;
+
+-- 相手の手の頻度
+DROP TABLE IF EXISTS janken_frq;
+CREATE TABLE IF NOT EXISTS janken_frq (
+    hand1 INTEGER NOT NULL CHECK (hand1 >= 1 AND hand1 <= 3), 
+    hand2 INTEGER NOT NULL CHECK (hand2 >= 1 AND hand2 <= 3), 
+    hand3 INTEGER NOT NULL CHECK (hand3 >= 1 AND hand3 <= 3), 
+    hand4 INTEGER NOT NULL CHECK (hand4 >= 1 AND hand4 <= 3), 
+    frequency INTEGER DEFAULT (abs(random() % 3))
+);
+WITH RECURSIVE tmp (h1, h2, h3, h4) AS (
+    SELECT 1, 1, 1, 1
+    UNION ALL
+    SELECT 
+        iif(h1 < 3, h1 + 1, 1), 
+        iif(h1 >= 3, iif(h2 < 3, h2 + 1, 1), h2), 
+        iif(h1 >= 3 AND h2 >= 3, iif(h3 < 3, h3 + 1, 1), h3), 
+        iif(h1 >= 3 AND h2 >= 3 AND h3 >= 3, h4 + 1, h4) 
+    FROM tmp WHERE h1 < 3 or h2 < 3 or h3 < 3 or h4 < 3
+)
+INSERT INTO janken_frq (hand1, hand2, hand3, hand4) SELECT * FROM tmp;
+
+-- 相手の手を記録したときの頻度記録処理
+DROP TRIGGER IF EXISTS janken_logging;
+CREATE TRIGGER IF NOT EXISTS janken_logging AFTER INSERT ON janken_log BEGIN
+    UPDATE janken_frq SET frequency = frequency + 1 
+    FROM (
+        SELECT 
+               max(hand) OVER (ORDER BY number DESC ROWS CURRENT ROW)AS h1,
+               max(hand) OVER (ORDER BY number DESC ROWS BETWEEN 1 FOLLOWING AND 1 FOLLOWING) AS h2,
+               max(hand) OVER (ORDER BY number DESC ROWS BETWEEN 2 FOLLOWING AND 2 FOLLOWING) AS h3,
+               max(hand) OVER (ORDER BY number DESC ROWS BETWEEN 3 FOLLOWING AND 3 FOLLOWING) AS h4
+        FROM janken_log LIMIT 1
+    )
+    WHERE hand1 = h1 AND hand2 = h2 AND hand3 = h3 AND hand4 = h4;
+    DELETE FROM janken_log WHERE number NOT IN (
+        SELECT number FROM janken_log ORDER BY number DESC LIMIT 5
+    );
+END;
+
+-- 相手の手を予測してそれに勝つ自分の手を決める
+DROP VIEW IF EXISTS janken_decision;
+CREATE VIEW IF NOT EXISTS janken_decision AS 
+    SELECT name, hand FROM (
+        SELECT iif(janken_frq.hand1 <= 1, 3, hand1 - 1) AS hand FROM janken_frq, (
+            SELECT 
+                max(hand) OVER (ORDER BY number DESC ROWS CURRENT ROW) AS h2,
+                max(hand) OVER (ORDER BY number DESC ROWS BETWEEN 1 FOLLOWING AND 1 FOLLOWING) AS h3,
+                max(hand) OVER (ORDER BY number DESC ROWS BETWEEN 2 FOLLOWING AND 2 FOLLOWING) AS h4
+            FROM janken_log LIMIT 1
+        )
+        WHERE hand2 = h2 AND hand3 = h3 AND hand4 = h4
+        ORDER BY frequency DESC
+        LIMIT 1
+    ) NATURAL JOIN janken_names
+;
+";
 	}
 
 	/// <summary>キャラ</summary>
