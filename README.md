@@ -9,16 +9,18 @@
 - 既存DBを上書きしないようにしました。(かといって、マージもしません。)
 - オープンやクローズ、リソースの開放などといった低レベル処理は隠蔽して、抽象化レベルの高い処理だけを表に出すようにしました。
 - できるだけ例外は内部で捉えて、リソースの未解放を避けて動き続けるように務めました。
+- このライブラリは直にSQLを使います。O/Rマッパーが必要な場合は、[SQLite-net](https://github.com/praeclarum/sqlite-net) (GitHub) や、[Microsoft.EntityFrameworkCore.Sqlite](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Sqlite/) (nuget) などをご検討ください。
 
 # 前提
 ### 環境
 - Unity 2021.3.30f1 (LTS), 2022.3.8f1
 - SQlite 3.41.0
-
+- Target PF: Windows、macOS、Android、iOS
+ 
 ### SQLite
 - SQLiteは、SQLのサブセットが使えるスタンドアローンなデータベース管理システムです。
-    - Windows、macOS、Android、iOSなどに対応しています。
 - [公式サイト](https://www.sqlite.org/index.html)
+- [SQLite3のためのSQLリファレンス](https://qiita.com/tetr4lab/items/691ceeb528d6144547c8) (Qiita)、([Zenn](https://zenn.dev/tetr4lab/articles/42c5e0ccc9b750))
 
 #### 更新手順
 - [UnityでSQLiteをAndroid(64bit対応)向けに導入する](https://qiita.com/tetr4lab/items/729008c94daaff82833e) (Qiita)
