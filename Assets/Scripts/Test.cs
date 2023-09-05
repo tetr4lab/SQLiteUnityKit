@@ -21,7 +21,7 @@ namespace SQLiteTest {
 		private const string DbPath3 = "SQLiteTest3.db";
 
 		/// <summary>DB</summary>
-		public static SQLite Database;
+		public static SQLite<SQLiteTable<SQLiteRow>, SQLiteRow> Database;
 
 		/// <summary>出力先</summary>
 		public static Text Console;
@@ -83,13 +83,13 @@ namespace SQLiteTest {
 			Console.text = $"SQLiteUnity Test [{number}] Start {DateTime.Now}\n{Path.Combine (Application.persistentDataPath, path)}\n\n";
 			Debug.Log ($"Start [{number}]");
 			// DB接続とテスト (初回は生成)
-			using (Database = new SQLite (path, sql)) {
+			using (Database = new SQLite<SQLiteTable<SQLiteRow>, SQLiteRow> (path, sql)) {
 				// バージョン確認
 				DumpTable ("バージョン", Database.ExecuteQuery ("select sqlite_version();"));
 				switch (number) {
 					case 1:
 						// 初回のみ
-						if (SQLiteTable.IsNullOrEmpty (Party.GetTable ())) {
+						if (Party.GetTable ().IsNullOrEmpty ()) {
 							// 適当にキャラを生成
 							var characters = new List<string> { "太郎", "花子", "二郎", "三郎" }.ConvertAll (name => Character.NewCharacter (name));
 
@@ -116,9 +116,9 @@ namespace SQLiteTest {
 						// 生成数
 						var COUNT = 1000;
 						// 既存数
-						var count = (int) Database.ExecuteQuery ("SELECT count(Serial) FROM Test") [0, 0];
+						var count = Database.ExecuteQuery ("SELECT count(Serial) AS count FROM Test") [0].GetColumn ("count", 0);
 						// パラメータの型を生成
-						var paramTable = new SQLiteTable (new [] {
+						var paramTable = new SQLiteTable<SQLiteRow> (new [] {
 							new ColumnDefinition ("Serial", SQLiteColumnType.SQLITE_TEXT),
 							new ColumnDefinition ("Guid", SQLiteColumnType.SQLITE_TEXT),
 						});
@@ -131,7 +131,7 @@ namespace SQLiteTest {
 						// パラメータを差し替えながらレコードを生成
 						Database.ExecuteNonQuery ("INSERT OR REPLACE INTO Test ([Serial], [Guid]) VALUES(:Serial, :Guid);", paramTable);
 						// 生成に要した時間
-						Console.text += $"Duration {DateTime.Now - startTime} / {COUNT}\n";
+						Console.text += $"Duration {DateTime.Now - startTime} / {COUNT} + {count}\n";
 						// 結果
 						DumpTable ("末尾100行", Database.ExecuteQuery ("SELECT * FROM Test LIMIT 100 OFFSET :offset;", new SQLiteRow { { "offset", count + COUNT - 100 }, }));
 						break;
@@ -149,9 +149,9 @@ namespace SQLiteTest {
 		}
 
 		/// <summary>テーブルの出力</summary>
-		void DumpTable (string subject, SQLiteTable table) {
+		void DumpTable (string subject, SQLiteTable<SQLiteRow> table) {
 			if (!string.IsNullOrEmpty (subject)) { Console.text += $"<color=aqua><size=24>--- Table {subject} ---</size></color>\n"; }
-			if (SQLiteTable.IsNullOrEmpty (table)) {
+			if (table.IsNullOrEmpty ()) {
 				Console.text += "<color=red>ERROR</color>\n";
 			} else {
 				for (var row = 0; row < table.Rows.Count; row++) {
@@ -168,7 +168,7 @@ namespace SQLiteTest {
 		}
 		void DumpTable (string subject, SQLiteRow row) {
 			if (!string.IsNullOrEmpty (subject)) { Console.text += $"<color=aqua><size=24>--- Row {subject} ---</size></color>\n"; }
-			if (SQLiteRow.IsNullOrEmpty (row)) {
+			if (row.IsNullOrEmpty ()) {
 				Console.text += "<color=red>ERROR</color>\n";
 			} else {
 				foreach (string name in row.Keys) {
@@ -374,7 +374,7 @@ CREATE VIEW IF NOT EXISTS janken_decision AS
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable GetTable () {
+		public static SQLiteTable<SQLiteRow> GetTable () {
 			return Test.Database.ExecuteQuery ("SELECT * FROM [RichCharacter];");
 		}
 
@@ -421,7 +421,7 @@ CREATE VIEW IF NOT EXISTS janken_decision AS
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable GetTable (Guid puid = default (Guid)) {
+		public static SQLiteTable<SQLiteRow> GetTable (Guid puid = default (Guid)) {
 			if (puid == default (Guid)) {
 				return Test.Database.ExecuteQuery ("SELECT * FROM [RichMember];");
 			} else {
@@ -471,7 +471,7 @@ CREATE VIEW IF NOT EXISTS janken_decision AS
 		}
 
 		/// <summary>全データ取得</summary>
-		public static SQLiteTable GetTable () {
+		public static SQLiteTable<SQLiteRow> GetTable () {
 			return Test.Database.ExecuteQuery ("SELECT * FROM [RichParty];");
 		}
 

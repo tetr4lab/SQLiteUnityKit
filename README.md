@@ -57,30 +57,35 @@
 
 # 基本的な使い方
   - データベース
-    - `public class SQLite : IDisposable`
-    - 新規生成 (初期化クエリ) (既にあれば単に使う、元があればコピーして使う)
-      - `public SQLite (string dbName, string query = null)`
+    - `public class SQLite<TTable, TRow> : IDisposable where TTable : SQLiteTable<TRow>, new () where TRow : SQLiteRow, new ()`
+      - `SQLiteTable<SQLiteRow>`、または、その派生クラスを使います。
+    - 新規生成
+      - `public SQLite (string dbName, string query = null, string path = null, bool force = false)`
+      - 初期化クエリを指定します。
+      - データベースファイルが既存なら何もせずそのまま使います。
+      - `Application.streamingAssetsPath`に同盟ファイルがあればコピーして使います。
     - 単文を実行
-      - `public void ExecuteNonQuery (string query, SQLiteRow param = null)`
+      - `public void ExecuteNonQuery (string query, TRow param = null)`
     - 単文を実行して結果を返す
-      - `public SQLiteTable ExecuteQuery (string query, SQLiteRow param = null)`
+      - `public TTable ExecuteQuery (string query, TRow param = null)`
     - 単文の変数を差し替えながら順に実行
-      - `public void ExecuteNonQuery (string query, SQLiteTable param)`
+      - `public void ExecuteNonQuery (string query, TTable param)`
       - 同じSQL文を、パラメータを変えながら繰り返し実行します。
     - 複文を一括実行し、誤りがあれば巻き戻す
-      - `public bool TransactionQueries<T> (T query) where T : IEnumerable<string>`
+      - `public bool TransactionQueries (IEnumerable<string> query)`
       - `public bool TransactionQueries (string query)`
       - 複数行を配列やリストで渡すか、単一文字列として渡すか、という違いです。
       - 冒頭と末尾に`BEGIN`,`COMMIT`が勝手に付きます。
-  - 行列データ
-    - `public class SQLiteTable`
+  - 基底行列データ
+    - `public class SQLiteTable<TRow> where TRow : SQLiteRow, new ()`
+      - `SQLiteRow`、または、その派生クラスを使います。
     - クエリで返されるデータで、列の定義と行データの集合です。
-  - 行データ / バインドパラメータ
+  - 基底行データ / バインドパラメータ
     - `public class SQLiteRow : Dictionary<string, object>`
     - 1行分のデータで、列データの集合です。バインドパラメータを渡すときにも使います。
   - 拡張バインド (トランザクション用)
     - `public static string SQLiteBind (this string query, SQLiteRow param)`
-    - sqliteの外側で行われる文字列ベースのバインドです。
+    - sqliteの外側で行われる文字列ベースのバインド(単なる文字列置換)です。
 
 # その他
   - ご指摘やご提案、あるいはご質問などを歓迎します。

@@ -44,10 +44,13 @@ namespace SQLiteUnity {
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_errmsg")] public static extern IntPtr sqlite3_errmsg (IntPtr db);
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_errcode")] public static extern SQLiteResultCode sqlite3_errcode (IntPtr db);
 		[DllImport ("sqlite3", EntryPoint = "sqlite3_extended_errcode")] public static extern SQLiteResultCode sqlite3_extended_errcode (IntPtr db);
+
+		/// <summary>デフォルトのバインド前置文字</summary>
+		public const char BIND_PREFIX = ':';
 	}
 
 	/// <summary>SQLiteハンドラ</summary>
-	public class SQLite : IDisposable {
+	public class SQLite<TTable, TRow> : IDisposable where TTable : SQLiteTable<TRow>, new () where TRow : SQLiteRow, new () {
 
 		/// <summary>コネクションがある</summary>
 		public bool IsOpen {
@@ -59,7 +62,12 @@ namespace SQLiteUnity {
 		/// <summary>DBファイルパス</summary>
 		private string _pathDB;
 
-		/// <summary>新規生成 (初期化クエリ) (既にあれば単に使う、元があればコピーして使う)</summary>
+		/// <summary>新規生成 (既にあれば単に使う、元があればコピーして使う)</summary>
+		/// <param name="dbName">データベースファイル名</param>
+		/// <param name="query">初期化クエリ</param>
+		/// <param name="path">データベースファイルを格納するフォルダのパス 指定されなければ`Application.persistentDataPath`</param>
+		/// <param name="force">既存ファイルに対しても`query`を再実行する</param>
+		/// <exception cref="ArgumentNullException"></exception>
 		public SQLite (string dbName, string query = null, string path = null, bool force = false) {
 			_ptrSQLiteDB = IntPtr.Zero;
 			_pathDB = System.IO.Path.Combine (path ?? Application.persistentDataPath, dbName);
@@ -120,10 +128,10 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>ステートメントを実行して結果行列を取得</summary>
-		private SQLiteTable ExecuteQuery (Statement statement) {
+		private TTable ExecuteQuery (Statement statement) {
 			if (!IsOpen) { return null; }
 			var pointer = statement.Pointer;
-			var dataTable = new SQLiteTable ();
+			var dataTable = new TTable ();
 			// 列の生成
 			int columnCount = SQLiteEntry.sqlite3_column_count (pointer);
 			for (int i = 0; i < columnCount; i++) {
@@ -183,12 +191,12 @@ namespace SQLiteUnity {
 		#region HighLevelAPI
 
 		/// <summary>単文の変数を差し替えながら順に実行</summary>
-		public void ExecuteNonQuery (string query, SQLiteTable param) {
-			foreach (SQLiteRow row in param) { ExecuteNonQuery (query, row); }
+		public void ExecuteNonQuery (string query, TTable param) {
+			foreach (TRow row in param) { ExecuteNonQuery (query, row); }
 		}
 
 		/// <summary>単文を実行</summary>
-		public void ExecuteNonQuery (string query, SQLiteRow param = null) {
+		public void ExecuteNonQuery (string query, TRow param = null) {
 			var close = !IsOpen; // 元の状態
 			Open ();
 			try {
@@ -207,8 +215,8 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>単文を実行して結果を返す</summary>
-		public SQLiteTable ExecuteQuery (string query, SQLiteRow param = null) {
-			SQLiteTable result = null;
+		public TTable ExecuteQuery (string query, TRow param = null) {
+			TTable result = null;
 			var close = !IsOpen; // 元の状態
 			Open ();
 			try {
@@ -250,18 +258,15 @@ namespace SQLiteUnity {
 
 		#endregion
 
-		/// <summary>デフォルトのバインド前置文字</summary>
-		public static readonly char BIND_PREFIX = ':';
-
 		/// <summary>SQLステートメント</summary>
 		private class Statement : IDisposable {
 
-			private SQLite _database;
+			private SQLite<TTable, TRow> _database;
 			public IntPtr Pointer { get { return pointer; } }
 			private IntPtr pointer;
 
 			/// <summary>SQLステートメントの生成</summary>
-			public Statement (SQLite database, string query, SQLiteRow param = null) {
+			public Statement (SQLite<TTable, TRow> database, string query, TRow param = null) {
                 Statement statement = this;
                 statement._database = database;
 				pointer = IntPtr.Zero;
@@ -288,11 +293,11 @@ namespace SQLiteUnity {
 			}
 
 			/// <summary>ステートメントにSQL引数をバインドする 必要ならBIND_PREFIXが補われる</summary>
-			private void BindParameter (SQLiteRow param) {
+			private void BindParameter (TRow param) {
 				if (param != null) {
 					foreach (string key in param.Keys) {
 						object val = param [key];
-						string name = (key [0] == ':' || key [0] == '@' || key [0] == '$') ? key : $"{BIND_PREFIX}{key}";
+						string name = (key [0] == ':' || key [0] == '@' || key [0] == '$') ? key : $"{SQLiteEntry.BIND_PREFIX}{key}";
 						if (val == null) {
 							SQLiteEntry.sqlite3_bind_null (pointer, SQLiteEntry.sqlite3_bind_parameter_index (pointer, name));
 						} else if (val is string) {
@@ -502,23 +507,23 @@ namespace SQLiteUnity {
 	}
 
 	/// <summary>テーブルのデータ</summary>
-	public class SQLiteTable {
+	public class SQLiteTable<TRow> where TRow : SQLiteRow, new () {
 
 		/// <summary>列定義</summary>
 		public List<ColumnDefinition> Columns { get; protected set; }
 
 		/// <summary>行</summary>
-		public List<SQLiteRow> Rows { get; protected set; }
+		public List<TRow> Rows { get; protected set; }
 
 		#region Static
 		/// <summary>テーブルがnullまたは空</summary>
-		public static bool IsNullOrEmpty (SQLiteTable table) => (table == null || table.Rows.Count <= 0);
+		public static bool IsNullOrEmpty (SQLiteTable<TRow> table) => (table == null || table.Rows.Count <= 0);
 		#endregion
 
 		/// <summary>空の生成</summary>
 		public SQLiteTable () {
 			Columns = new List<ColumnDefinition> { };
-			Rows = new List<SQLiteRow> { };
+			Rows = new List<TRow> { };
 		}
 
 		/// <summary>列一覧からの生成</summary>
@@ -529,10 +534,10 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>先頭行</summary>
-		public SQLiteRow Top => (Rows.Count > 0) ? Rows [0] : null;
+		public TRow Top => (Rows.Count > 0) ? Rows [0] : null;
 
 		// 行にアクセスするインデクサ
-		public SQLiteRow this [int index] => (index >= 0 && index < Rows.Count) ? Rows [index] : null;
+		public TRow this [int index] => (index >= 0 && index < Rows.Count) ? Rows [index] : null;
 
 		// セルにアクセスするインデクサ (行番号と列番号)
 		public object this [int rowIndex, int columnIndex] {
@@ -566,7 +571,7 @@ namespace SQLiteUnity {
 			if (values.Length != Columns.Count) {
 				throw new IndexOutOfRangeException ("The number of values in the row must match the number of column");
 			}
-			var row = new SQLiteRow ();
+			var row = new TRow ();
 			for (int i = 0; i < values.Length; i++) {
 				row.Add (Columns [i].Name, values [i]);
 			}
@@ -609,7 +614,7 @@ namespace SQLiteUnity {
 		public static bool IsInt32<T> (this T val) => (val is int || val is uint || val is short || val is ushort  || val is byte || val is sbyte);
 
 		/// <summary>テーブルがnullまたは空</summary>
-		public static bool IsNullOrEmpty (this SQLiteTable table) => SQLiteTable.IsNullOrEmpty (table);
+		public static bool IsNullOrEmpty<TRow> (this SQLiteTable<TRow> table) where TRow : SQLiteRow, new () => SQLiteTable<TRow>.IsNullOrEmpty (table);
 
 		/// <summary>行がnullまたは空</summary>
 		public static bool IsNullOrEmpty (this SQLiteRow row) => SQLiteRow.IsNullOrEmpty (row);
