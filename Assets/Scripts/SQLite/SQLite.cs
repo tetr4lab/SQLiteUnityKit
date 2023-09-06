@@ -441,10 +441,10 @@ namespace SQLiteUnity {
 	public class ColumnDefinition {
 
 		/// <summary>列名</summary>
-		public string Name;
+		public virtual string Name { get; set; }
 
 		/// <summary>型</summary>
-		public SQLiteColumnType Type;
+		public virtual SQLiteColumnType Type { get; set; }
 
 		/// <summary>要素を指定して生成</summary>
 		public ColumnDefinition (string name, SQLiteColumnType type) {
@@ -510,10 +510,10 @@ namespace SQLiteUnity {
 	public class SQLiteTable<TRow> where TRow : SQLiteRow, new () {
 
 		/// <summary>列定義</summary>
-		public List<ColumnDefinition> Columns { get; protected set; }
+		public virtual List<ColumnDefinition> Columns { get; protected set; }
 
 		/// <summary>行</summary>
-		public List<TRow> Rows { get; protected set; }
+		public virtual List<TRow> Rows { get; protected set; }
 
 		#region Static
 		/// <summary>テーブルがnullまたは空</summary>
@@ -534,13 +534,13 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>先頭行</summary>
-		public TRow Top => (Rows.Count > 0) ? Rows [0] : null;
+		public virtual TRow Top => (Rows.Count > 0) ? Rows [0] : null;
 
 		// 行にアクセスするインデクサ
-		public TRow this [int index] => (index >= 0 && index < Rows.Count) ? Rows [index] : null;
+		public virtual TRow this [int index] => (index >= 0 && index < Rows.Count) ? Rows [index] : null;
 
 		// セルにアクセスするインデクサ (行番号と列番号)
-		public object this [int rowIndex, int columnIndex] {
+		public virtual object this [int rowIndex, int columnIndex] {
 			get => (rowIndex >= 0 && rowIndex < Rows.Count && columnIndex >= 0 && columnIndex < Columns.Count) ? Rows [rowIndex] [Columns [columnIndex].Name] : null;
 			set {
 				if (rowIndex >= 0 && rowIndex < Rows.Count && columnIndex >= 0 && columnIndex < Columns.Count) {
@@ -550,7 +550,7 @@ namespace SQLiteUnity {
 		}
 
 		// セルにアクセスするインデクサ (行番号と列名)
-		public object this [int rowIndex, string columnName] {
+		public virtual object this [int rowIndex, string columnName] {
 			get => (rowIndex >= 0 && rowIndex < Rows.Count ) ? Rows [rowIndex] [columnName] : null;
 			set {
 				if (rowIndex >= 0 && rowIndex < Rows.Count) {
@@ -560,14 +560,14 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>コレクション</summary>
-		public IEnumerator GetEnumerator () {
+		public virtual IEnumerator GetEnumerator () {
 			for (var i = 0; i < Rows.Count; i++) {
 				yield return Rows [i];
 			}
 		}
 
 		/// <summary>値を指定して行を加える</summary>
-		public void AddRow (object [] values) {
+		public virtual void AddRow (object [] values) {
 			if (values.Length != Columns.Count) {
 				throw new IndexOutOfRangeException ("The number of values in the row must match the number of column");
 			}
@@ -579,12 +579,12 @@ namespace SQLiteUnity {
 		}
 
 		/// <summary>名前と型を指定して列を加える</summary>
-		public void AddColumn (string name, SQLiteColumnType type, object [] values = null) {
+		public virtual void AddColumn (string name, SQLiteColumnType type, object [] values = null) {
 			AddColumn (new ColumnDefinition (name, type), values);
 		}
 
 		/// <summary>列の定義を指定して列を加える</summary>
-		public void AddColumn (ColumnDefinition column, object [] values = null) {
+		public virtual void AddColumn (ColumnDefinition column, object [] values = null) {
 			if (Columns.Exists (col => col.Name == column.Name)) {
 				throw new ArgumentException ($"The column name is already exist. '{column.Name}'");
 			}
