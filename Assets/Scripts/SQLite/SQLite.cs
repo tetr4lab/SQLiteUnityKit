@@ -192,7 +192,23 @@ namespace SQLiteUnity {
 
 		/// <summary>単文の変数を差し替えながら順に実行</summary>
 		public void ExecuteNonQuery (string query, TTable param) {
-			foreach (TRow row in param) { ExecuteNonQuery (query, row); }
+			var close = !IsOpen; // 元の状態
+			Open ();
+			try {
+				foreach (TRow row in param) {
+					using (Statement statement = new Statement (this, query, row)) {
+						if (statement.Pointer != IntPtr.Zero) {
+							ExecuteNonQuery (statement);
+						}
+					}
+				}
+			}
+			catch (SQLiteException e) {
+				Debug.LogError ($"SQLite: Can't ExecuteNonQuery {e}");
+			}
+			finally {
+				if (close) { Close (); } // 元に戻す
+			}
 		}
 
 		/// <summary>単文を実行</summary>
@@ -261,20 +277,24 @@ namespace SQLiteUnity {
 		/// <summary>SQLステートメント</summary>
 		private class Statement : IDisposable {
 
-			private SQLite<TTable, TRow> _database;
-			public IntPtr Pointer { get { return pointer; } }
+			/// <summary>DB</summary>
+			private SQLite<TTable, TRow> database;
+
+			/// <summary>整数ポインタ外部アクセス</summary>
+			public IntPtr Pointer => pointer;
+
+			/// <summary>整数ポインタ (フィールドが必要)</summary>
 			private IntPtr pointer;
 
 			/// <summary>SQLステートメントの生成</summary>
 			public Statement (SQLite<TTable, TRow> database, string query, TRow param = null) {
-                Statement statement = this;
-                statement._database = database;
+                this.database = database;
 				pointer = IntPtr.Zero;
-				if (_database != null && !database.IsOpen) {
+				if (database != null && !database.IsOpen) {
 					throw new SQLiteException ("SQLite database is not open.");
 				}
-				if (SQLiteEntry.sqlite3_prepare_v2 (_database._ptrSQLiteDB, query, System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount (query), out pointer, IntPtr.Zero) != SQLiteResultCode.SQLITE_OK) {
-					IntPtr errorMsg = SQLiteEntry.sqlite3_errmsg (_database._ptrSQLiteDB);
+				if (SQLiteEntry.sqlite3_prepare_v2 (database._ptrSQLiteDB, query, System.Text.Encoding.GetEncoding ("UTF-8").GetByteCount (query), out pointer, IntPtr.Zero) != SQLiteResultCode.SQLITE_OK) {
+					IntPtr errorMsg = SQLiteEntry.sqlite3_errmsg (database._ptrSQLiteDB);
 					throw new SQLiteException (Marshal.PtrToStringAnsi (errorMsg));
 				}
 				if (param != null) {
@@ -284,10 +304,10 @@ namespace SQLiteUnity {
 
 			/// <summary>破棄</summary>
 			public void Dispose () {
-				if (_database != null && pointer != IntPtr.Zero) {
+				if (database != null && pointer != IntPtr.Zero) {
 					var result = SQLiteEntry.sqlite3_finalize (pointer);
 					if (result != SQLiteResultCode.SQLITE_OK) {
-						throw new SQLiteException ($"Could not finalize SQL statement. {result} {SQLiteEntry.sqlite3_extended_errcode (_database._ptrSQLiteDB)}");
+						throw new SQLiteException ($"Could not finalize SQL statement. {result} {SQLiteEntry.sqlite3_extended_errcode (database._ptrSQLiteDB)}");
 					}
 				}
 			}
