@@ -13,7 +13,10 @@
 
 # 前提
 ### 環境
-- Unity 2021.3.30f1 (LTS), 2022.3.8f1
+- Unity 2021.3.30f1 (LTS)
+  - 動作を確認済みです。
+- Unity 2022.3.9f1 (LTS)
+  - 水平スクロール時に、スクロールバーを操作してもスクロールしない不具合があります。
 - SQlite 3.41.0
 - Target PF: Windows、macOS、Android、iOS
  
@@ -38,16 +41,25 @@
 - `Assets/Scripts/`
     - `SQLiteUnity.cs`
         - 必須部分です。
-    - "SQLiteUnityUtility.cs"
-        - 拡張ユーティリティクラスです。お好みでどうぞ。
+    - `SQLiteUnityUtility.cs`
+        - 拡張ユーティリティクラスです。必要に応じてお使いください。
         - トランザクションでも擬似的なバインドが使えるようになっています。
-    - "Test.cs"
+    - `Startup.cs`
+        - デモ用のローダです。
+    - `SQLiteTest.cs`
         - デモ用スクリプトです。
         - Test 1: ゲームっぽい関係性のあるデータ
         - Test 2: シンプルで多めのデータ
         - Test 3: [SQL学習型じゃんけん](https://qiita.com/tetr4lab/items/656f8f9d3ea68bbe76ec) (Qiita)
-- `Assets/Prefabs/Console.prefab`
+    - `ScrollTest.cs`
+        - デモ用スクリプトです。多数のデータをスクロールさせます。
+        - [仮想スクロールレクト](https://github.com/tetr4lab/InfiniteScroll) (GitHub)
+- `Assets/Resources/Prefabs/Canvas1.prefab`
     - デモ用プレハブです。
+- `Assets/Resources/Prefabs/Canvas2.prefab`
+    - デモ用プレハブです。
+- `Assets/Resources/Prefabs/Item.prefab`
+    - `Canvas2`で使用します。
 - `Assets/Scenes/SQLite_Test.unity`
     - デモ用シーンです。
 
