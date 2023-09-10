@@ -7,9 +7,7 @@ using SQLiteUnity;
 using System.IO;
 using UnityEngine.XR;
 
-namespace SQLiteTest {
-
-	public class Test : MonoBehaviour {
+	public class SQLiteTest : MonoBehaviour {
 
 		/// <summary>DB path 1</summary>
 		private const string DbPath1 = "SQLiteTest.db";
@@ -67,8 +65,16 @@ namespace SQLiteTest {
 						case "ParButton":
 							button.onClick.AddListener (() => DoTest (33, DbPath3, _creationSql3));
 							break;
-					}
+					case "Test4Button":
+						button.onClick.AddListener (() => {
+							var prefab = Resources.Load<GameObject> ("Prefabs/Canvas2");
+							var obj = Instantiate (prefab, transform.parent.parent);
+							obj.transform.SetSiblingIndex (transform.parent.GetSiblingIndex ());
+							Destroy (transform.parent.gameObject);
+						});
+						break;
 				}
+			}
 			}
 		}
 
@@ -375,12 +381,12 @@ CREATE VIEW IF NOT EXISTS janken_decision AS
 
 		/// <summary>全データ取得</summary>
 		public static SQLiteTable<SQLiteRow> GetTable () {
-			return Test.Database.ExecuteQuery ("SELECT * FROM [RichCharacter];");
+			return SQLiteTest.Database.ExecuteQuery ("SELECT * FROM [RichCharacter];");
 		}
 
 		/// <summary>IDを指定して既存のキャラを生成</summary>
 		public Character (Guid cuid) {
-			var table = Test.Database.ExecuteQuery ("SELECT * FROM [Character] WHERE [CUID]=:CUID;", new SQLiteRow { { "CUID", cuid }, });
+			var table = SQLiteTest.Database.ExecuteQuery ("SELECT * FROM [Character] WHERE [CUID]=:CUID;", new SQLiteRow { { "CUID", cuid }, });
 			this.CUID = cuid;
 			this.Name = table.Top.GetColumn ("Name");
 		}
@@ -388,7 +394,7 @@ CREATE VIEW IF NOT EXISTS janken_decision AS
 		/// <summary>名前を与えて新しいキャラを作る</summary>
 		public static Character NewCharacter (string name) {
 			var character = new Character (Guid.NewGuid (), name);
-			Test.Database.ExecuteNonQuery ("INSERT INTO [Character]([CUID], [Name]) VALUES(:CUID, :Name);", new SQLiteRow {
+			SQLiteTest.Database.ExecuteNonQuery ("INSERT INTO [Character]([CUID], [Name]) VALUES(:CUID, :Name);", new SQLiteRow {
 				{ "CUID", character.CUID },
 				{ "Name", character.Name },
 			});
@@ -423,15 +429,15 @@ CREATE VIEW IF NOT EXISTS janken_decision AS
 		/// <summary>全データ取得</summary>
 		public static SQLiteTable<SQLiteRow> GetTable (Guid puid = default (Guid)) {
 			if (puid == default (Guid)) {
-				return Test.Database.ExecuteQuery ("SELECT * FROM [RichMember];");
+				return SQLiteTest.Database.ExecuteQuery ("SELECT * FROM [RichMember];");
 			} else {
-				return Test.Database.ExecuteQuery ("SELECT * FROM [RichMember] WHERE [PUID]=:PUID;", new SQLiteRow { { "PUID", puid }, });
+				return SQLiteTest.Database.ExecuteQuery ("SELECT * FROM [RichMember] WHERE [PUID]=:PUID;", new SQLiteRow { { "PUID", puid }, });
 			}
 		}
 
 		/// <summary>パーティIDと番号を指定して既存のメンバーを生成</summary>
 		public Member (Guid puid, int order) {
-			var table = Test.Database.ExecuteQuery ("SELECT * FROM [Member] WHERE [PUID]=:PUID AND [Order]=:Order;", new SQLiteRow {
+			var table = SQLiteTest.Database.ExecuteQuery ("SELECT * FROM [Member] WHERE [PUID]=:PUID AND [Order]=:Order;", new SQLiteRow {
 				{ "PUID", puid },
 				{ "Order", order },
 			});
@@ -444,7 +450,7 @@ CREATE VIEW IF NOT EXISTS janken_decision AS
 		/// <summary>キャラとクラスを指定して新しいメンバーを作る</summary>
 		public static Member NewMember (Guid puid, int order, Character character, JobClass jobclass, string message = "") {
 			var member = new Member (order, character, jobclass, message);
-			Test.Database.ExecuteNonQuery ("INSERT INTO [Member]([PUID], [Order], [CUID], [Class], [Message]) VALUES(:PUID, :Order, :CUID, :Class, :Message);", new SQLiteRow {
+			SQLiteTest.Database.ExecuteNonQuery ("INSERT INTO [Member]([PUID], [Order], [CUID], [Class], [Message]) VALUES(:PUID, :Order, :CUID, :Class, :Message);", new SQLiteRow {
 				{ "PUID", puid },
 				{ "Order", member.Order },
 				{ "CUID", member.Character.CUID },
@@ -455,63 +461,61 @@ CREATE VIEW IF NOT EXISTS janken_decision AS
 		}
 	}
 
-	/// <summary>パーティ</summary>
-	public class Party {
-		public Guid PUID;
-		public string Title;
-		public string Message;
-		public Member this [int order] { get { return this.Members.Find (member => member.Order == order); } }
-		protected List<Member> Members;
+/// <summary>パーティ</summary>
+public class Party {
+	public Guid PUID;
+	public string Title;
+	public string Message;
+	public Member this [int order] { get { return this.Members.Find (member => member.Order == order); } }
+	protected List<Member> Members;
 
-		protected Party (Guid puid, string title, string message) {
-			this.PUID = puid;
-			this.Title = title;
-			this.Message = message;
-			this.Members = new List<Member> { };
-		}
+	protected Party (Guid puid, string title, string message) {
+		this.PUID = puid;
+		this.Title = title;
+		this.Message = message;
+		this.Members = new List<Member> { };
+	}
 
-		/// <summary>全データ取得</summary>
-		public static SQLiteTable<SQLiteRow> GetTable () {
-			return Test.Database.ExecuteQuery ("SELECT * FROM [RichParty];");
-		}
+	/// <summary>全データ取得</summary>
+	public static SQLiteTable<SQLiteRow> GetTable () {
+		return SQLiteTest.Database.ExecuteQuery ("SELECT * FROM [RichParty];");
+	}
 
-		/// <summary>IDを指定して既存のパーティを生成</summary>
-		public Party (Guid puid) {
-			var table = Test.Database.ExecuteQuery ("SELECT * FROM [RichParty] WHERE [PUID]=:PUID;", new SQLiteRow { { "PUID", puid }, });
-			this.PUID = puid;
-			this.Title = table.Top.GetColumn ("Title");
-			this.Message = table.Top.GetColumn ("Message");
-			var orders = (new List<string> (table.Top.GetColumn ("Members").Split (new [] { ',' }))).ConvertAll (str => int.Parse (str));
-			orders.Sort ();
-			this.Members = orders.ConvertAll (order => new Member (this.PUID, order));
-		}
+	/// <summary>IDを指定して既存のパーティを生成</summary>
+	public Party (Guid puid) {
+		var table = SQLiteTest.Database.ExecuteQuery ("SELECT * FROM [RichParty] WHERE [PUID]=:PUID;", new SQLiteRow { { "PUID", puid }, });
+		this.PUID = puid;
+		this.Title = table.Top.GetColumn ("Title");
+		this.Message = table.Top.GetColumn ("Message");
+		var orders = (new List<string> (table.Top.GetColumn ("Members").Split (new [] { ',' }))).ConvertAll (str => int.Parse (str));
+		orders.Sort ();
+		this.Members = orders.ConvertAll (order => new Member (this.PUID, order));
+	}
 
-		/// <summary>タイトルを与えて新しいパーティを作る</summary>
-		public static Party NewParty (string title, string message = "") {
-			var party = new Party (Guid.NewGuid (), title, message);
-			Test.Database.ExecuteNonQuery ("INSERT INTO [Party]([PUID], [Title], [Message]) VALUES(:PUID, :Title, :Message);", new SQLiteRow {
+	/// <summary>タイトルを与えて新しいパーティを作る</summary>
+	public static Party NewParty (string title, string message = "") {
+		var party = new Party (Guid.NewGuid (), title, message);
+		SQLiteTest.Database.ExecuteNonQuery ("INSERT INTO [Party]([PUID], [Title], [Message]) VALUES(:PUID, :Title, :Message);", new SQLiteRow {
 				{ "PUID", party.PUID },
 				{ "Title", party.Title },
 				{ "Message", party.Message },
 			});
-			return party;
-		}
-
-		/// <summary>パーティにメンバーを加える</summary>
-		public void Add (Character character, JobClass jobclass, string message) {
-			var newMember = Member.NewMember (this.PUID, this.Members.Count, character, jobclass, message);
-			this.Members.Add (newMember);
-		}
-
-		/// <summary>文字列化</summary>
-		public override string ToString () {
-			var str = new List<string> { };
-			str.Add ($"パーティ[{this.Title}]「{this.Message}」");
-			foreach (var member in this.Members) {
-				str.Add ($"{member.Order}:[{member.Character.Name}]({member.JobClass})「{member.Message}」");
-			}
-			return string.Join ("\n", str);
-		}
+		return party;
 	}
 
+	/// <summary>パーティにメンバーを加える</summary>
+	public void Add (Character character, JobClass jobclass, string message) {
+		var newMember = Member.NewMember (this.PUID, this.Members.Count, character, jobclass, message);
+		this.Members.Add (newMember);
+	}
+
+	/// <summary>文字列化</summary>
+	public override string ToString () {
+		var str = new List<string> { };
+		str.Add ($"パーティ[{this.Title}]「{this.Message}」");
+		foreach (var member in this.Members) {
+			str.Add ($"{member.Order}:[{member.Character.Name}]({member.JobClass})「{member.Message}」");
+		}
+		return string.Join ("\n", str);
+	}
 }
