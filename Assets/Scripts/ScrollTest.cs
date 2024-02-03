@@ -306,7 +306,11 @@ CREATE TABLE IF NOT EXISTS Test (
 			firstIndex = 0;
 		}
 		scroll.horizontal = !(scroll.vertical = verticalToggle.isOn);
-		scroll.reverseArrangement = reverseToggle.isOn;
+#if UNITY_2022_1_OR_NEWER
+        scroll.horizontalScrollbar = scroll.horizontalScrollbar;
+        scroll.verticalScrollbar = scroll.verticalScrollbar;
+#endif
+        scroll.reverseArrangement = reverseToggle.isOn;
 		scroll.controlChildSize = ctrlSizeToggle.isOn;
 		scroll.childAlignment = _alignDict [alignDropdown.value];
 		// 旧ハンドルを破棄

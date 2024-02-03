@@ -13,10 +13,7 @@
 
 # 前提
 ### 環境
-- Unity 2021.3.30f1 (LTS)
-  - 動作を確認済みです。
-- Unity 2022.3.9f1 (LTS)
-  - 水平スクロール時に、スクロールバーを操作してもスクロールしない不具合があります。
+- Unity 2022.3.19f1 (LTS)
 - SQlite 3.41.0
 - Target PF: Windows、macOS、Android、iOS
  
