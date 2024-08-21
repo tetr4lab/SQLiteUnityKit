@@ -1,0 +1,21 @@
+{
+    "name": "com.tetr4lab.sqliteunitykit",
+    "version": "1.0.0",
+    "displayName": "SQLite Unity Kit",
+    "description": "SQLite plugin for Unity",
+    "unity": "2019.1",
+    "author": {
+        "name": "tetr4lab",
+        "url": "https://github.com/tetr4lab"
+    },
+    "dependencies": {},
+    "keywords": [
+        "sqlite",
+        "database"
+    ],
+    "files": [
+        "/Assets/Plugins/sqlite3*",
+        "/Assets/Scripts/SQLiteUnity.cs",
+        "/Assets/Scripts/SQLiteUnityUtility.cs"
+    ]
+}
