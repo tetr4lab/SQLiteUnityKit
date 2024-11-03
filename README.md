@@ -10,10 +10,11 @@
 - オープンやクローズ、リソースの開放などといった低レベル処理は隠蔽して、抽象化レベルの高い処理だけを表に出すようにしました。
 - できるだけ例外は内部で捉えて、リソースの未解放を避けて動き続けるように務めました。
 - このライブラリは直にSQLを使います。O/Rマッパーが必要な場合は、[SQLite-net](https://github.com/praeclarum/sqlite-net) (GitHub) や、[Microsoft.EntityFrameworkCore.Sqlite](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Sqlite/) (nuget) などをご検討ください。
+- さっぱり分かっていませんが、[標準ライブラリ](#Unity.VisualScripting%20%E3%82%92%E4%BD%BF%E3%81%86%E6%96%B9%E6%B3%95)だけで実現することも可能なようです。
 
 # 前提
 ### 環境
-- Unity 2022.3.19f1 (LTS)
+- Unity 2022.3.51f1 (LTS)
 - SQlite 3.41.0
 - Target PF: Windows、macOS、Android、iOS
  
@@ -95,6 +96,55 @@
   - 拡張バインド (トランザクション用)
     - `public static string SQLiteBind (this string query, SQLiteRow param)`
     - sqliteの外側で行われる文字列ベースのバインド(単なる文字列置換)です。
+
+# Unity.VisualScripting を使う方法
+- 以下、ほんのさわりだけ紹介します。
+- 偶然発見したので、これがどういう意味を持つのかは理解していません。
+
+### 環境
+- Unity 6000.0.24f1
+- 新規プロジェクトを生成しただけです。
+
+### 公式ドキュメント
+
+https://docs.unity3d.com/Packages/com.unity.visualscripting@1.9/api/Unity.VisualScripting.Dependencies.Sqlite.html
+
+## コード
+- 以下のスクリプトをシーンの空オブジェクトにアタッチするだけで、クエリの結果がクラスにマッピングできました。
+
+```csharp:Startup.cs
+using System;
+using System.IO;
+using UnityEngine;
+using Unity.VisualScripting.Dependencies.Sqlite;
+
+public class Startup : MonoBehaviour {
+    void Start () {
+        var path = Path.Combine (Application.persistentDataPath, "SQLiteTest.db");
+        using (var connection = new SQLiteConnection (path)) {
+            var data = connection.Query<TestData> ("select * from Test;");
+            Debug.Log (string.Join ("\n", data.ConvertAll (i => i.ToString ())));
+        }
+    }
+}
+
+public class TestData {
+    public int Serial { get; set; }
+    public Guid Guid { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
+    public string Lable { get; set; }
+    public string Check { get; set; }
+    public decimal? Width { get; set; }
+    public decimal? Height { get; set; }
+    public DateTime? Created { get; set; }
+    public DateTime? Modified { get; set; }
+
+    public override string ToString ()
+        => $"{Serial}: {Guid}, '{Title}', '{Description}', '{Lable}', '{Check}', {Width}, {Height}, {Created}, {Modified} ";
+}
+```
+
 
 # その他
   - ご指摘やご提案、あるいはご質問などを歓迎します。
