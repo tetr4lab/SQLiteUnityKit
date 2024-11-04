@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using SQLiteUnity;
+using Tetr4lab.SQLiteUnity;
 using System.IO;
 using UnityEngine.XR;
 

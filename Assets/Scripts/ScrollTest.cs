@@ -7,7 +7,7 @@ using Random = UnityEngine.Random;
 
 using Tetr4lab.InfiniteScroll;
 using TextAnchor = Tetr4lab.InfiniteScroll.TextAnchor;
-using SQLiteUnity;
+using Tetr4lab.SQLiteUnity;
 using System.Linq;
 using static UnityEditor.Progress;
 using System.IO;
