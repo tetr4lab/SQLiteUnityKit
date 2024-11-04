@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using InfiniteScroll;
+using Tetr4lab.InfiniteScroll;
 
 /// <summary>物理アイテム</summary>
 public class ItemComponent : InfiniteScrollItemComponentBase {

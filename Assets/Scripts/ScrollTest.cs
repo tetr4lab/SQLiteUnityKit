@@ -5,7 +5,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-using InfiniteScroll;
+using Tetr4lab.InfiniteScroll;
+using TextAnchor = Tetr4lab.InfiniteScroll.TextAnchor;
 using SQLiteUnity;
 using System.Linq;
 using static UnityEditor.Progress;
@@ -278,7 +279,7 @@ visible: {(scroll.FirstIndex < 0 ? "no items" : $"{scroll.FirstIndex} - {scroll.
     private float RandomSize (bool vertical) => (vertical ? DefaultHeight : DefaultWidth) + Random.Range (0, 5) * 40;
 
     /// <summary>ドロップダウンからenumを得る変換辞書</summary>
-    private static readonly Dictionary<int, InfiniteScroll.TextAnchor> _alignDict = new Dictionary<int, InfiniteScroll.TextAnchor> { { 0, InfiniteScroll.TextAnchor.LowerLeft }, { 1, InfiniteScroll.TextAnchor.MiddleCenter }, { 2, InfiniteScroll.TextAnchor.UpperRight }, };
+    private static readonly Dictionary<int, TextAnchor> _alignDict = new Dictionary<int, TextAnchor> { { 0, TextAnchor.LowerLeft }, { 1, TextAnchor.MiddleCenter }, { 2, TextAnchor.UpperRight }, };
 
 	/// <summary>DB初期化式</summary>
 	private const string _creationSql = @"
