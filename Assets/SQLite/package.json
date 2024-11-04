@@ -1,0 +1,19 @@
+{
+    "name": "org.tetr4lab.sqliteunitykit",
+    "version": "1.0.0",
+    "displayName": "SQLiteUnityKit",
+    "description": "Framework to connect with a SQLite database from Unity for iOS, Android, MAC , Windows",
+    "unity": "2021.3",
+    "documentationUrl": "https://github.com/tetr4lab/SQLiteUnityKit/",
+    "licenses": "MIT",
+    "dependencies": {},
+    "keywords": [
+        "SQLite",
+        "Unity"
+    ],
+    "author": {
+        "name": "tetr4lab.",
+        "email": "info@tetr4lab.org",
+        "url": "https://tetr4lab.org/"
+    }
+}
