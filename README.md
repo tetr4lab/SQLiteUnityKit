@@ -1,4 +1,4 @@
-# SQLiteUnityKit を下敷きにしたライブラリ
+## SQLiteUnityKit を下敷きにしたライブラリ
 - 数多あるSQLiteUnityKitの改修のひとつです。
 - [リポジトリ](https://github.com/tetr4lab/SQLiteUnityKit) (GitHub)
 
@@ -12,12 +12,12 @@
 - このライブラリは直にSQLを使います。O/Rマッパーが必要な場合は、[SQLite-net](https://github.com/praeclarum/sqlite-net) (GitHub) や、[Microsoft.EntityFrameworkCore.Sqlite](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Sqlite/) (nuget) などをご検討ください。
 - さっぱり分かっていませんが、[標準ライブラリ](#unityvisualscripting-%E3%82%92%E4%BD%BF%E3%81%86%E6%96%B9%E6%B3%95)だけで実現することも可能なようです。
 
-# 前提
+## 前提
 ### 環境
 - Unity 2022.3.51f1 (LTS)
 - SQlite 3.41.0
 - Target PF: Windows、macOS、Android、iOS
- 
+
 ### SQLite
 - SQLiteは、SQLのサブセットが使えるスタンドアローンなデータベース管理システムです。
 - [公式サイト](https://www.sqlite.org/index.html)
@@ -30,8 +30,12 @@
 - SQLiteUnityKitは、UnityからSQLiteを使用するためのフレームワークです。
 - [リポジトリ](https://github.com/Busta117/SQLiteUnityKit) (GitHub)
 
-# 導入と概要
-- リポジトリから`Assets`をプロジェクトへ導入してください。
+## 導入と概要
+### 導入
+- `Package Manager`で`Add package from git URL...`から、以下のURLを入力します。
+```
+https://github.com/tetr4lab/SQLiteUnityKit.git?path=/Assets/SQLite
+```
 
 ### 概要
 - `Assets/Plugins/sqlite3/`
@@ -65,7 +69,7 @@
 - [公式サイトのダウンロード](https://www.sqlite.org/download.html)から最新版を取ってきて`Assets/Plugins`へ導入してください。
 - Androidについては、[こちらの記事(Qiita)](https://qiita.com/tetr4lab/items/729008c94daaff82833e)を参考にしてください。
 
-# 基本的な使い方
+## 基本的な使い方
   - データベース
     - `public class SQLite<TTable, TRow> : IDisposable where TTable : SQLiteTable<TRow>, new () where TRow : SQLiteRow, new ()`
       - `SQLiteTable<SQLiteRow>`、または、その派生クラスを使います。
@@ -97,7 +101,11 @@
     - `public static string SQLiteBind (this string query, SQLiteRow param)`
     - sqliteの外側で行われる文字列ベースのバインド(単なる文字列置換)です。
 
-# Unity.VisualScripting を使う方法
+## その他
+  - ご指摘やご提案、あるいはご質問などを歓迎します。
+    - 常識的なことも理解していないので、何か間違えているような場合はご助言いただけると助かります。
+
+# 【蛇足】 Unity.VisualScripting を使う方法
 - 以下、ほんのさわりだけ紹介します。
 - 冒頭で触れた「[SQLite-net](https://github.com/praeclarum/sqlite-net)」の古いバージョンのようです。
   - 偶然発見したので、これがどういう意味を持つのかは理解していません。
@@ -110,7 +118,7 @@
 
 https://docs.unity3d.com/Packages/com.unity.visualscripting@1.9/api/Unity.VisualScripting.Dependencies.Sqlite.html
 
-## コード
+### コード
 - 以下のスクリプトをシーンの空オブジェクトにアタッチするだけで、クエリの結果がクラスにマッピングできました。
 
 ```csharp:Startup.cs
@@ -145,9 +153,3 @@ public class TestData {
         => $"{Serial}: {Guid}, '{Title}', '{Description}', '{Lable}', '{Check}', {Width}, {Height}, {Created}, {Modified} ";
 }
 ```
-
-
-# その他
-  - ご指摘やご提案、あるいはご質問などを歓迎します。
-    - 常識的なことも理解していないので、何か間違えているような場合はご助言いただけると助かります。
-  - より詳しい使い方については、使用例を記事にしたいと考えています。
