@@ -1,6 +1,6 @@
 {
-    "name": "SQLiteUnity",
-    "rootNamespace": "SQLiteUnity",
+    "name": "org.tetr4lab.sqliteunity",
+    "rootNamespace": "Tetr4lab.SQLiteUnity",
     "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
