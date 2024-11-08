@@ -8,10 +8,7 @@ using Random = UnityEngine.Random;
 using Tetr4lab.InfiniteScroll;
 using TextAnchor = Tetr4lab.InfiniteScroll.TextAnchor;
 using Tetr4lab.SQLiteUnity;
-using System.Linq;
-using static UnityEditor.Progress;
 using System.IO;
-using Microsoft.SqlServer.Server;
 
 /// <summary>仮想スクロールサンプルメイン</summary>
 public class ScrollTest : MonoBehaviour {
