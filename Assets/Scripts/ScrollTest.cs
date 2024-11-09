@@ -5,8 +5,8 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-using Tetr4lab.InfiniteScroll;
-using TextAnchor = Tetr4lab.InfiniteScroll.TextAnchor;
+using Tetr4lab.UI;
+using TextAnchor = Tetr4lab.UI.TextAnchor;
 using Tetr4lab.SQLiteUnity;
 using System.IO;
 

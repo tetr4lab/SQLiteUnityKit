@@ -1,4 +1,4 @@
-﻿using Tetr4lab.InfiniteScroll;
+﻿using Tetr4lab.UI;
 using UnityEngine;
 using UnityEngine.UI;
 using Tetr4lab.SQLiteUnity;
