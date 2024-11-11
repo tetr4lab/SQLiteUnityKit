@@ -6,7 +6,7 @@ using UnityEngine;
 
 /* * developed by tetr4lab. @ http://tetr4lab.nyanta.jp/
  * */
-namespace Tetr4lab.SQLiteUnity {
+namespace Tetr4lab.UnityEngine.SQLite {
 
 	/// <summary>パーサのデリゲート</summary>
 	public delegate T Parser<T> (string str);

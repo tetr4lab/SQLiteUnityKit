@@ -5,9 +5,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
-using Tetr4lab.UI;
-using TextAnchor = Tetr4lab.UI.TextAnchor;
-using Tetr4lab.SQLiteUnity;
+using Tetr4lab.UnityEngine.UI;
+using TextAnchor = Tetr4lab.UnityEngine.UI.TextAnchor;
+using Tetr4lab.UnityEngine.SQLite;
 using System.IO;
 
 /// <summary>仮想スクロールサンプルメイン</summary>

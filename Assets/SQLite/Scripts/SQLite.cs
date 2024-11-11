@@ -16,7 +16,7 @@ using UnityEngine.Networking;
  * */
 /* * modified by tetr4lab. @ http://tetr4lab.nyanta.jp/
  * */
-namespace Tetr4lab.SQLiteUnity {
+namespace Tetr4lab.UnityEngine.SQLite {
 
 	/// <summary>プラグインアクセス</summary>
 	internal static class SQLiteEntry {

@@ -153,12 +153,12 @@
       },
       "url": "https://packages.unity.com"
     },
-    "org.tetr4lab.infinitescroll": {
+    "org.tetr4lab.unity.infinitescroll": {
       "version": "https://github.com/tetr4lab/InfiniteScroll.git?path=/Assets/InfiniteScroll",
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "36f0938a3b71d06352f5a43b0f2d55cbf6402e4c"
+      "hash": "1eb04cf7b990e3ac3068d8841f653ce38bb94c4a"
     },
     "com.unity.modules.ai": {
       "version": "1.0.0",

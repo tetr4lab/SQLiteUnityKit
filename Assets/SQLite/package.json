@@ -1,5 +1,5 @@
 {
-    "name": "org.tetr4lab.sqliteunitykit",
+    "name": "org.tetr4lab.unity.sqliteunitykit",
     "version": "1.0.0",
     "displayName": "SQLiteUnityKit",
     "description": "Framework to connect with a SQLite database from Unity for iOS, Android, MAC , Windows",

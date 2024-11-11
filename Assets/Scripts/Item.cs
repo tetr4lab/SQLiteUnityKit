@@ -1,7 +1,7 @@
-﻿using Tetr4lab.UI;
+﻿using Tetr4lab.UnityEngine.UI;
 using UnityEngine;
 using UnityEngine.UI;
-using Tetr4lab.SQLiteUnity;
+using Tetr4lab.UnityEngine.SQLite;
 
 /// <summary>論理アイテム</summary>
 public class Item : SQLiteRow, IInfiniteScrollItem {
