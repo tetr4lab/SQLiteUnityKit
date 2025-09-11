@@ -15,7 +15,7 @@
 ## 前提
 ### 環境
 - Unity 6000.0.56f1
-- SQlite 3.41.0
+- SQlite 3.50.4
 - Target PF: Windows、macOS、Android、iOS
 
 ### SQLite
