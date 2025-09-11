@@ -14,7 +14,7 @@
 
 ## 前提
 ### 環境
-- Unity 2022.3.51f1 (LTS)
+- Unity 2022.3.61f1 (LTS)
 - SQlite 3.41.0
 - Target PF: Windows、macOS、Android、iOS
 
@@ -77,7 +77,7 @@ https://github.com/tetr4lab/SQLiteUnityKit.git?path=/Assets/SQLite
       - `public SQLite (string dbName, string query = null, string path = null, bool force = false)`
       - 初期化クエリを指定します。
       - データベースファイルが既存なら何もせずそのまま使います。
-      - `Application.streamingAssetsPath`に同盟ファイルがあればコピーして使います。
+      - `Application.streamingAssetsPath`に同名ファイルがあればコピーして使います。
     - 単文を実行
       - `public void ExecuteNonQuery (string query, TRow param = null)`
     - 単文を実行して結果を返す
