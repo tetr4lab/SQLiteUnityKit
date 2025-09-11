@@ -14,7 +14,7 @@
 
 ## 前提
 ### 環境
-- Unity 2022.3.61f1 (LTS)
+- Unity 6000.0.56f1
 - SQlite 3.41.0
 - Target PF: Windows、macOS、Android、iOS
 
