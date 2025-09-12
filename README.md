@@ -9,7 +9,8 @@
 - 既存DBを上書きしないようにしました。(かといって、マージもしません。)
 - オープンやクローズ、リソースの開放などといった低レベル処理は隠蔽して、抽象化レベルの高い処理だけを表に出すようにしました。
 - できるだけ例外は内部で捉えて、リソースの未解放を避けて動き続けるように務めました。
-- このライブラリは直にSQLを使います。O/Rマッパーが必要な場合は、[SQLite-net](https://github.com/praeclarum/sqlite-net) (GitHub) や、[Microsoft.EntityFrameworkCore.Sqlite](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Sqlite/) (nuget) などをご検討ください。
+- このライブラリは直にSQLを使います。また、データを、テーブル、ロウ、カラムの概念のまま扱います。
+- O/Rマッパーが必要な場合は、[SQLite-net](https://github.com/praeclarum/sqlite-net) (GitHub) や、[Microsoft.EntityFrameworkCore.Sqlite](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Sqlite/) (nuget) などをご検討ください。
 - さっぱり分かっていませんが、[標準ライブラリ](#unityvisualscripting-%E3%82%92%E4%BD%BF%E3%81%86%E6%96%B9%E6%B3%95)だけで実現することも可能なようです。
 
 ## 前提
@@ -38,14 +39,15 @@ https://github.com/tetr4lab/SQLiteUnityKit.git?path=/Assets/SQLite
 ```
 
 ### 概要
-- `Assets/Plugins/sqlite3/`
+- `Assets/SQLite/Plugins/sqlite3/`
     - 各プラットフォーム向けのSQLiteプラグインです。(iOSはOS側でサポートがあります。)
-- `Assets/Scripts/`
-    - `SQLiteUnity.cs`
+- `Assets/SQLite/Scripts/`
+    - `SQLite.cs`
         - 必須部分です。
-    - `SQLiteUnityUtility.cs`
+    - `SQLiteUtility.cs`
         - 拡張ユーティリティクラスです。必要に応じてお使いください。
         - トランザクションでも擬似的なバインドが使えるようになっています。
+- `Assets/Scripts/`
     - `Startup.cs`
         - デモ用のローダです。
     - `SQLiteTest.cs`
@@ -56,11 +58,16 @@ https://github.com/tetr4lab/SQLiteUnityKit.git?path=/Assets/SQLite
     - `ScrollTest.cs`
         - デモ用スクリプトです。多数のデータをスクロールさせます。
         - [仮想スクロールレクト](https://github.com/tetr4lab/InfiniteScroll) (GitHub)
-- `Assets/Resources/Prefabs/Canvas1.prefab`
+    - `Item.cs`
+        - デモ用スクリプトです。
+    - `ItemComponent.cs`
+        - デモ用スクリプトです。
+- `Assets/Resources/Prefabs/`
+  - `Canvas1.prefab`
     - デモ用プレハブです。
-- `Assets/Resources/Prefabs/Canvas2.prefab`
+  - `Canvas2.prefab`
     - デモ用プレハブです。
-- `Assets/Resources/Prefabs/Item.prefab`
+  - `Item.prefab`
     - `Canvas2`で使用します。
 - `Assets/Scenes/SQLite_Test.unity`
     - デモ用シーンです。
@@ -106,6 +113,7 @@ https://github.com/tetr4lab/SQLiteUnityKit.git?path=/Assets/SQLite
     - 常識的なことも理解していないので、何か間違えているような場合はご助言いただけると助かります。
 
 # 【蛇足】 Unity.VisualScripting を使う方法
+- この部分は更新されていません。
 - 以下、ほんのさわりだけ紹介します。
 - 冒頭で触れた「[SQLite-net](https://github.com/praeclarum/sqlite-net)」の古いバージョンのようです。
   - 偶然発見したので、これがどういう意味を持つのかは理解していません。
