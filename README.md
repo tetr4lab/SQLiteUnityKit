@@ -10,7 +10,7 @@
 - オープンやクローズ、リソースの開放などといった低レベル処理は隠蔽して、抽象化レベルの高い処理だけを表に出すようにしました。
 - できるだけ例外は内部で捉えて、リソースの未解放を避けて動き続けるように務めました。
 - このライブラリは直にSQLを使います。また、データを、テーブル、ロウ、カラムの概念のまま扱います。
-- O/Rマッパーが必要な場合は、[SQLite-net](https://github.com/praeclarum/sqlite-net) (GitHub) や、[Microsoft.EntityFrameworkCore.Sqlite](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Sqlite/) (nuget) などをご検討ください。
+- O/Rマッパーが必要な場合は、[PetaPoco](https://github.com/CollaboratingPlatypus/PetaPoco) (GitHub) や、[SQLite-net](https://github.com/praeclarum/sqlite-net) (GitHub)、[Microsoft.EntityFrameworkCore.Sqlite](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Sqlite/) (nuget) などをご検討ください。
 - さっぱり分かっていませんが、[標準ライブラリ](#unityvisualscripting-%E3%82%92%E4%BD%BF%E3%81%86%E6%96%B9%E6%B3%95)だけで実現することも可能なようです。
 
 ## 前提
